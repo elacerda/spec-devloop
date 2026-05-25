@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spec-devloop"
+version = "0.1.0"
+description = "MVP-0 CLI for spec-devloop"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "typer>=0.12,<1.0",
+  "PyYAML>=6.0,<7.0",
+  "rich>=13.0,<14.0",
+]
+
+[project.scripts]
+devloop = "devloop.cli:app"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0,<9.0",
+  "ruff>=0.6.0,<1.0",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_doctor.py" = ["E501"]

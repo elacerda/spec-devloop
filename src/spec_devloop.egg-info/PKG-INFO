@@ -1,3 +1,13 @@
+Metadata-Version: 2.4
+Name: spec-devloop
+Version: 0.1.0
+Summary: MVP-0 CLI for spec-devloop
+Requires-Python: <3.13,>=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: typer<1.0,>=0.12
+Requires-Dist: PyYAML<7.0,>=6.0
+Requires-Dist: rich<14.0,>=13.0
+
 # spec-devloop
 
 This package contains the initial redesigned documentation and specification set for **spec-devloop**.
@@ -116,18 +126,3 @@ devloop doctor
 It should validate the minimum required specification set, inspect optional files, verify YAML syntax, confirm managed directories, and report whether the project is ready for manual cycles.
 
 No model calls, no agent automation, and no code editing should be implemented before the local spec validation layer is reliable.
-
-## Local MVP-0 usage
-
-Minimum local run for MVP-0:
-
-```bash
-python3 -m pip install -e .
-devloop doctor
-```
-
-If `uv` is available, dependency sync can be done with:
-
-```bash
-uv sync
-```

@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/devloop/__init__.py
+src/devloop/cli.py
+src/devloop/doctor.py
+src/spec_devloop.egg-info/PKG-INFO
+src/spec_devloop.egg-info/SOURCES.txt
+src/spec_devloop.egg-info/dependency_links.txt
+src/spec_devloop.egg-info/entry_points.txt
+src/spec_devloop.egg-info/requires.txt
+src/spec_devloop.egg-info/top_level.txt
+tests/test_doctor.py
