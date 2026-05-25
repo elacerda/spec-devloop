@@ -1,13 +1,31 @@
 # Agent adapter configuration.
 # The MVP should implement only the manual adapter.
 
+schema_version: 1
+
+schema:
+  required_top_level:
+    - default_adapter
+    - adapters
+    - policy
+  adapter_entry_required:
+    - type
+    - enabled
+  policy_required:
+    - adapter_required_for_doctor
+    - default_mvp_adapter
+    - agent_specific_logic_allowed_in_core
+  validation_rules:
+    - default_adapter key must exist in adapters
+    - default_adapter entry must have enabled: true
+
 default_adapter: manual
 
 adapters:
   manual:
     enabled: true
     type: manual
-    description: "Generate prompts/artifacts; user manually passes them to any agent and saves outputs."
+    description: "Generate prompts or artifacts; user manually passes them to any agent and saves outputs."
 
   codex_cli:
     enabled: false
@@ -17,7 +35,7 @@ adapters:
   cline:
     enabled: false
     type: external_agent
-    description: "Future adapter for Cline. Plan/Act should be adapter-level behavior."
+    description: "Future adapter for Cline. Plan or Act should be adapter-level behavior."
 
   roo:
     enabled: false

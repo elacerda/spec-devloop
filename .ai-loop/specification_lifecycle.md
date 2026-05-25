@@ -14,6 +14,8 @@ This distinction is central to the project.
 
 These define the identity and governing rules of the project.
 
+Policies are **foundational specifications specialized by role**.
+
 Examples:
 
 ```text
@@ -79,18 +81,19 @@ Examples:
 
 They are generated or maintained by the CLI.
 
+`state/` is managed by the CLI, but `loop_state.json` and `current_cycle.json` are not required for `devloop doctor`.
+
 ## Authority hierarchy
 
 When files conflict, the intended authority order is:
 
 ```text
-1. Foundational specifications
-2. Policies
-3. Operational configuration
-4. Human decision records
-5. Cycle reports and previous artifacts
-6. Runtime state
-7. Agent claims
+1. Foundational specifications (including policies)
+2. Operational configuration
+3. Human decision records
+4. Cycle reports and previous artifacts
+5. Runtime state
+6. Agent claims
 ```
 
 Agent claims have the lowest authority unless supported by evidence.
@@ -119,6 +122,30 @@ Recommended practice:
 - documentation cycles change non-governing docs;
 - spec-change cycles change foundational specs or policies;
 - decision records capture meaningful architectural changes.
+
+## Readiness matrix
+
+The following readiness levels are used by `devloop doctor` and by higher-level workflows.
+
+### `ready_for_doctor`
+
+Minimum required specs for doctor are present and parseable.
+
+### `ready_for_manual_cycle`
+
+`ready_for_doctor` plus managed directories exist and optional cycle templates are available.
+
+### `ready_for_evidence_collection`
+
+`ready_for_manual_cycle` plus git repository detected and command configuration parseable for future execution phases.
+
+### `ready_for_model_provider`
+
+`ready_for_doctor` plus a valid, enabled provider configuration beyond `none`.
+
+### `ready_for_agent_adapter`
+
+`ready_for_doctor` plus a valid, enabled adapter configuration beyond `manual`.
 
 ## Decision records
 

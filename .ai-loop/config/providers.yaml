@@ -1,6 +1,24 @@
 # Model provider configuration.
 # The MVP must work with provider: none.
 
+schema_version: 1
+
+schema:
+  required_top_level:
+    - default_provider
+    - providers
+    - policy
+  provider_entry_required:
+    - type
+    - enabled
+  policy_required:
+    - provider_required_for_doctor
+    - provider_required_for_manual_cycles
+    - provider_specific_logic_allowed_in_core
+  validation_rules:
+    - default_provider key must exist in providers
+    - default_provider entry must have enabled: true
+
 default_provider: none
 
 providers:

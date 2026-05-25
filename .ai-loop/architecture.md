@@ -8,15 +8,17 @@ The core should operate on local files, explicit states, and mechanical evidence
 
 ## Recommended language and runtime
 
+These are implementation recommendations for future development stages. They are not proof of existing files and they are not mandatory prerequisites for `devloop doctor`.
+
 - Language: Python
 - Target version for MVP: Python 3.12
 - Suggested Python requirement: `>=3.12,<3.13`
-- Packaging: `pyproject.toml`
-- Suggested tooling: `uv`, `pytest`, `ruff`, `mypy` or `pyright` if useful
-- CLI framework: `typer`
-- Terminal output: `rich`
-- Config validation: `pydantic`
-- YAML parsing: `pyyaml` or `ruamel.yaml`
+- Packaging (future): `pyproject.toml`
+- Suggested tooling (future): `uv`, `pytest`, `ruff`, `mypy` or `pyright` if useful
+- CLI framework (future): `typer`
+- Terminal output (future): `rich`
+- Config validation (future): `pydantic`
+- YAML parsing (future): `pyyaml` or `ruamel.yaml`
 - HTTP client for future providers: `httpx`
 
 ## Core modules
@@ -87,7 +89,7 @@ The core should own:
 - cycle directory creation;
 - artifact naming;
 - command execution;
-- git status/diff collection;
+- git status and diff collection;
 - report generation;
 - human decision recording.
 
@@ -101,7 +103,7 @@ Examples:
 
 - `manual`: generates prompts and expects the user to paste outputs back;
 - `codex_cli`: may later call Codex CLI commands or prepare Codex-specific prompts;
-- `cline`: may later prepare Plan/Act prompts for Cline;
+- `cline`: may later prepare Plan or Act prompts for Cline;
 - `roo`: may later prepare prompts for Roo;
 - `continue`: may later prepare context or instructions for Continue;
 - `aider`: may later prepare instructions for Aider;
@@ -109,7 +111,7 @@ Examples:
 
 The MVP should implement only the `manual` adapter.
 
-The core must not assume that every agent has Plan/Act modes. Plan/Act is an adapter strategy, not a protocol requirement.
+The core must not assume that every agent has Plan or Act modes. Plan or Act is an adapter strategy, not a protocol requirement.
 
 ## Model provider boundary
 
@@ -151,7 +153,7 @@ Benefits:
 - easy inspection;
 - easy git versioning;
 - easy debugging;
-- easy copy/paste into external agents;
+- easy copy and paste into external agents;
 - low infrastructure burden;
 - compatibility with different tools.
 

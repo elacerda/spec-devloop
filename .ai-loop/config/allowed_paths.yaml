@@ -1,6 +1,33 @@
 # Path policy for spec-devloop development.
 # This file distinguishes normal implementation changes from spec changes.
 
+schema_version: 1
+
+schema:
+  required_top_level:
+    - path_sets
+    - cycle_permissions
+    - precedence
+  path_sets_required:
+    - foundational_specs
+    - operational_config
+    - docs
+    - source
+    - generated_cycle_artifacts
+  validation_rules:
+    - each cycle type must define allow and deny lists
+    - referenced set names in allow or deny must exist in path_sets
+
+precedence:
+  rule_order:
+    - explicit_deny_over_allow
+    - more_specific_pattern_over_general_pattern
+    - foundational_specs_immutable_in_normal_cycles
+  rules:
+    explicit_deny_over_allow: true
+    more_specific_pattern_over_general_pattern: true
+    foundational_specs_immutable_in_normal_cycles: true
+
 path_sets:
   foundational_specs:
     - ".ai-loop/project.md"

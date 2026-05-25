@@ -6,6 +6,55 @@ This file defines the protocol that `spec-devloop` should support.
 
 The protocol is tool-independent. It should work with manual copy/paste, Codex CLI, Cline, Roo, Continue, Aider, future internal agents, or other tools.
 
+## MVP-0 command contract: `devloop doctor`
+
+`devloop doctor` is the first command and defines MVP-0.
+
+It validates local specification readiness only. It does not execute agents, providers, tests, or implementation commands.
+
+### Doctor checks and severities
+
+`devloop doctor` must evaluate at least:
+
+1. required specification files present (`error`);
+2. optional specification/config files present (`warning` when absent);
+3. YAML parse validity for `.ai-loop/config/*.yaml` (`error`);
+4. minimal schema validity for `commands.yaml`, `providers.yaml`, `adapters.yaml`, `allowed_paths.yaml` (`error`);
+5. managed directories existence (`warning` when absent);
+6. git repository availability (`warning` when absent);
+7. current worktree cleanliness (`warning` when dirty);
+8. consistency of defaults in providers/adapters (for example, default key exists and is enabled) (`error`).
+
+Severity levels:
+
+- `info`: informational only, never blocks readiness;
+- `warning`: degraded readiness, does not fail command;
+- `error`: invalid contract, fails command.
+
+### Doctor exit codes
+
+`devloop doctor` must use these exit codes:
+
+- `0`: completed with no `error` findings;
+- `2`: completed with one or more `error` findings;
+- `3`: internal command failure (unexpected runtime failure of doctor itself).
+
+Warnings alone must still produce exit code `0`.
+
+### Directory creation behavior
+
+In MVP-0, `devloop doctor` must only report missing managed directories.
+
+It must not create directories automatically.
+
+### Git behavior in doctor
+
+If no git repository is present, doctor reports `warning` and continues.
+
+If the worktree is dirty, doctor reports `warning` and continues.
+
+Starting or continuing implementation or evidence cycles may enforce stricter git requirements later, but doctor itself remains non-mutating and validation-only.
+
 ## Core loop
 
 A normal implementation cycle follows this shape:

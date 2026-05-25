@@ -2,6 +2,34 @@
 # These commands are examples for the spec-devloop project itself.
 # They may be adjusted when the actual Python project is initialized.
 
+schema_version: 1
+
+schema:
+  required_top_level:
+    - project
+    - specs
+    - git
+    - managed_directories
+    - commands
+    - execution
+    - doctor
+  project_required:
+    - name
+    - cli_command
+    - python_version
+  specs_required:
+    - minimum_required
+    - optional
+  git_required:
+    - require_repository
+    - require_clean_worktree_before_cycle
+    - collect_diff_after_execution
+    - allow_auto_commit
+  execution_required:
+    - shell
+    - timeout_seconds
+    - stop_on_required_command_failure
+
 project:
   name: spec-devloop
   cli_command: devloop
@@ -64,3 +92,28 @@ execution:
   shell: true
   timeout_seconds: 120
   stop_on_required_command_failure: true
+
+doctor:
+  mode: report_only
+  create_missing_directories: false
+  severities:
+    info:
+      blocks: false
+    warning:
+      blocks: false
+    error:
+      blocks: true
+  exit_codes:
+    ok: 0
+    validation_error: 2
+    internal_failure: 3
+  checks:
+    required_specs_present: error
+    optional_specs_present: warning
+    yaml_parse_valid: error
+    yaml_schema_minimum_valid: error
+    managed_directories_present: warning
+    git_repository_detected: warning
+    git_worktree_clean: warning
+    default_provider_valid: error
+    default_adapter_valid: error
