@@ -1,0 +1,33 @@
+# Model provider configuration.
+# The MVP must work with provider: none.
+
+default_provider: none
+
+providers:
+  none:
+    type: none
+    enabled: true
+    description: "No model provider. Manual mode only."
+
+  openai_compatible_example:
+    type: openai_compatible
+    enabled: false
+    base_url: "http://localhost:8000/v1"
+    model: "example-model"
+    api_key_env: "SPEC_DEVLOOP_API_KEY"
+    max_prompt_chars: 12000
+    max_output_tokens: 2048
+    temperature: 0.2
+    description: "Example provider. Could point to vLLM, LM Studio, or another OpenAI-compatible backend."
+
+  ollama_example:
+    type: ollama
+    enabled: false
+    base_url: "http://localhost:11434"
+    model: "example-model"
+    description: "Example future Ollama provider."
+
+policy:
+  provider_required_for_doctor: false
+  provider_required_for_manual_cycles: false
+  provider_specific_logic_allowed_in_core: false

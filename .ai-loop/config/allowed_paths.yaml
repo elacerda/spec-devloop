@@ -1,0 +1,61 @@
+# Path policy for spec-devloop development.
+# This file distinguishes normal implementation changes from spec changes.
+
+path_sets:
+  foundational_specs:
+    - ".ai-loop/project.md"
+    - ".ai-loop/architecture.md"
+    - ".ai-loop/protocol.md"
+    - ".ai-loop/specification_lifecycle.md"
+    - ".ai-loop/policies/**"
+
+  operational_config:
+    - ".ai-loop/config/**"
+
+  docs:
+    - "README.md"
+    - "docs/**"
+
+  source:
+    - "src/**"
+    - "tests/**"
+    - "pyproject.toml"
+    - "uv.lock"
+
+  generated_cycle_artifacts:
+    - ".ai-loop/cycles/**"
+    - ".ai-loop/state/**"
+
+cycle_permissions:
+  implementation:
+    allow:
+      - "source"
+      - "docs"
+      - "generated_cycle_artifacts"
+    deny:
+      - "foundational_specs"
+      - "operational_config"
+
+  documentation:
+    allow:
+      - "docs"
+      - "generated_cycle_artifacts"
+    deny:
+      - "foundational_specs"
+
+  spec-change:
+    allow:
+      - "foundational_specs"
+      - "operational_config"
+      - "docs"
+      - "generated_cycle_artifacts"
+    deny: []
+
+  investigation:
+    allow:
+      - "generated_cycle_artifacts"
+      - "docs"
+    deny:
+      - "source"
+      - "foundational_specs"
+      - "operational_config"

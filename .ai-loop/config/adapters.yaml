@@ -1,0 +1,45 @@
+# Agent adapter configuration.
+# The MVP should implement only the manual adapter.
+
+default_adapter: manual
+
+adapters:
+  manual:
+    enabled: true
+    type: manual
+    description: "Generate prompts/artifacts; user manually passes them to any agent and saves outputs."
+
+  codex_cli:
+    enabled: false
+    type: external_agent
+    description: "Future adapter for Codex CLI."
+
+  cline:
+    enabled: false
+    type: external_agent
+    description: "Future adapter for Cline. Plan/Act should be adapter-level behavior."
+
+  roo:
+    enabled: false
+    type: external_agent
+    description: "Future adapter for Roo."
+
+  continue:
+    enabled: false
+    type: external_agent
+    description: "Future adapter for Continue."
+
+  aider:
+    enabled: false
+    type: external_agent
+    description: "Future adapter for Aider."
+
+  internal:
+    enabled: false
+    type: internal_agent
+    description: "Future restricted internal agent. Not part of MVP."
+
+policy:
+  adapter_required_for_doctor: false
+  default_mvp_adapter: manual
+  agent_specific_logic_allowed_in_core: false

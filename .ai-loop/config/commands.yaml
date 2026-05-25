@@ -1,0 +1,66 @@
+# Mechanical command configuration for spec-devloop.
+# These commands are examples for the spec-devloop project itself.
+# They may be adjusted when the actual Python project is initialized.
+
+project:
+  name: spec-devloop
+  cli_command: devloop
+  python_version: "3.12"
+
+specs:
+  minimum_required:
+    - ".ai-loop/project.md"
+    - ".ai-loop/architecture.md"
+    - ".ai-loop/protocol.md"
+    - ".ai-loop/config/commands.yaml"
+
+  optional:
+    - ".ai-loop/specification_lifecycle.md"
+    - ".ai-loop/policies/model_policy.md"
+    - ".ai-loop/policies/agent_policy.md"
+    - ".ai-loop/policies/context_policy.md"
+    - ".ai-loop/policies/acceptance_policy.md"
+    - ".ai-loop/policies/failure_modes.md"
+    - ".ai-loop/config/allowed_paths.yaml"
+    - ".ai-loop/config/providers.yaml"
+    - ".ai-loop/config/adapters.yaml"
+
+git:
+  require_repository: true
+  require_clean_worktree_before_cycle: true
+  collect_diff_after_execution: true
+  allow_auto_commit: false
+
+managed_directories:
+  - ".ai-loop/cycles"
+  - ".ai-loop/state"
+
+commands:
+  test:
+    - name: pytest
+      command: "pytest"
+      required: true
+      available_after: "python_project_initialized"
+
+  lint:
+    - name: ruff-check
+      command: "ruff check ."
+      required: false
+      available_after: "python_project_initialized"
+
+  format_check:
+    - name: ruff-format-check
+      command: "ruff format --check ."
+      required: false
+      available_after: "python_project_initialized"
+
+  typecheck:
+    - name: mypy
+      command: "mypy src"
+      required: false
+      available_after: "python_project_initialized"
+
+execution:
+  shell: true
+  timeout_seconds: 120
+  stop_on_required_command_failure: true
