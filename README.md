@@ -1,0 +1,118 @@
+# spec-devloop
+
+This package contains the initial redesigned documentation and specification set for **spec-devloop**.
+
+`spec-devloop` is intended to be a local, file-based, spec-first, human-in-the-loop orchestrator for AI-assisted development cycles. It is not intended to be a coding agent in the initial MVP. Instead, it governs a development loop around external or future internal executors.
+
+The project name is:
+
+```text
+spec-devloop
+```
+
+The recommended CLI command name remains:
+
+```bash
+devloop
+```
+
+## Design position
+
+`spec-devloop` should be:
+
+- model-agnostic;
+- agent-agnostic;
+- backend-agnostic;
+- file-based;
+- spec-first;
+- local-first;
+- auditable;
+- conservative by default;
+- usable even without any model provider configured.
+
+It should treat tools such as Cline, Roo, Continue, Codex CLI, Aider, vLLM, Ollama, OpenAI-compatible endpoints, OpenAI API, Anthropic API, or future internal agents as optional participants, adapters, or providers.
+
+## Specification layers
+
+This package separates the project into four kinds of files:
+
+1. **Foundational specifications**  
+   Stable, high-authority documents that define the identity, architecture, protocol, and governance of the project.
+
+2. **Policies**  
+   Stable or semi-stable documents that constrain models, agents, context, acceptance, and failure handling.
+
+3. **Operational configuration**  
+   YAML files that the CLI can validate and execute mechanically.
+
+4. **Generated cycle artifacts**  
+   Per-cycle files created by the CLI during actual use.
+
+## Directory overview
+
+```text
+.ai-loop/
+  project.md
+  architecture.md
+  protocol.md
+  specification_lifecycle.md
+
+  policies/
+    model_policy.md
+    agent_policy.md
+    context_policy.md
+    acceptance_policy.md
+    failure_modes.md
+
+  config/
+    commands.yaml
+    allowed_paths.yaml
+    providers.yaml
+    adapters.yaml
+
+  templates/
+    cycle/
+      task.md
+      agent_plan.md
+      plan_review.md
+      execution_result.md
+      report.md
+      decision.yaml
+
+  cycles/
+  state/
+
+docs/
+  vision.md
+  mvp.md
+  glossary.md
+  research/
+    related_work.md
+  decisions/
+    0001-initial-architecture.md
+```
+
+## Minimum required files
+
+The MVP should be able to work with a smaller minimum set:
+
+```text
+.ai-loop/project.md
+.ai-loop/architecture.md
+.ai-loop/protocol.md
+.ai-loop/config/commands.yaml
+```
+
+All other files should be read if present, but absence of optional policy/config files should not prevent basic operation unless the selected command explicitly requires them.
+
+## Recommended first implementation target
+
+The first implementation target should be:
+
+```bash
+devloop doctor
+```
+
+It should validate the minimum required specification set, inspect optional files, verify YAML syntax, confirm managed directories, and report whether the project is ready for manual cycles.
+
+No model calls, no agent automation, and no code editing should be implemented before the local spec validation layer is reliable.
