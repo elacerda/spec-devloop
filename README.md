@@ -147,7 +147,7 @@ MVP-0 commands:
 - `devloop init --check`: checks the expected minimum structure without creating it (report-only).
 - `devloop cycle list`: lists cycle IDs.
 - `devloop cycle check <cycle-id>`: validates the structure of one cycle.
-- `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution.
+- `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution. Requires a valid cycle and `.ai-loop/project.md`. Optional files (`.ai-loop/architecture.md`, `.ai-loop/protocol.md`, `.ai-loop/config/commands.yaml`, `.ai-loop/config/allowed_paths.yaml`) are included when present. Does not call AI or execute external commands.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 
 ### MVP-1 low-friction command

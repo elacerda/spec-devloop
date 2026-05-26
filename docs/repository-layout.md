@@ -150,10 +150,17 @@ This is an evolutionary target, not a bootstrap requirement.
 ### Recommended for better results
 
 - acceptance criteria;
-- allowed paths;
-- test commands;
+- allowed paths (`.ai-loop/config/allowed_paths.yaml`);
+- test commands (`.ai-loop/config/commands.yaml`);
 - reports;
 - evidence.
+
+### Optional for cycle prompt
+
+The following files are optional and included in the prompt when present:
+
+- `.ai-loop/architecture.md` - Project architecture documentation;
+- `.ai-loop/protocol.md` - Protocol or specification details.
 
 ### Advanced
 

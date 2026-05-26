@@ -135,6 +135,47 @@ Emits a Markdown context packet for manual execution.
 
 This is useful in manual mode but should be understood as a compatibility/fallback mechanism, not the final product goal.
 
+**Requirements**
+
+The command requires:
+
+- A valid cycle directory (created by `devloop cycle new` or manually);
+- `.ai-loop/project.md` (project identity file).
+
+**Optional files**
+
+The following files are optional and included in the prompt when present:
+
+- `.ai-loop/architecture.md` - Project architecture documentation;
+- `.ai-loop/protocol.md` - Protocol or specification details;
+- `.ai-loop/config/commands.yaml` - Command configuration;
+- `.ai-loop/config/allowed_paths.yaml` - Allowed paths configuration.
+
+**Minimal workflow**
+
+The command now works with the minimal structure created by `devloop init`:
+
+```bash
+devloop init
+devloop cycle new "<task description>"
+devloop cycle prompt c-001
+```
+
+**Behavior**
+
+- When optional files exist, they are included in the prompt;
+- When optional files do not exist, the prompt is still generated;
+- Absence of `.ai-loop/project.md` is an error;
+- Does not call AI models;
+- Does not execute external commands;
+- Purely report-only.
+
+**Exit codes**
+
+- `0`: success;
+- `2`: validation error (e.g., missing `.ai-loop/project.md`);
+- `3`: internal error.
+
 ### `devloop cycle summary <cycle-id>`
 
 Prints a compact summary:
