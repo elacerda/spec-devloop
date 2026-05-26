@@ -169,6 +169,21 @@ O comando `devloop cycle prompt <cycle-id>` é conservador e report-only no MVP-
 
 Este comportamento garante que o comando seja seguro para execução e não cause efeitos colaterais indesejados.
 
+## Relação com o futuro loop supervisionado
+
+O ciclo manual é a base para o futuro loop supervisionado por IA. As mesmas estruturas de arquivo (`meta.yaml`, `task.md`, `report.md`) serão reutilizadas, mas com novos significados e usos:
+
+- **MVP-0**: ciclo manual é criado e executado pelo humano
+- **MVP-1**: IA supervisora gera o próximo passo/prompt para o humano executar
+- **MVP-2**: IA supervisora revisa o plano e resultado trazidos pelo humano
+- **MVP-3**: IA supervisora integra com providers de modelo para coletar evidências
+
+O ciclo manual fornece:
+
+- **Estrutura**: uma consistência de formato para todos os ciclos
+- **Evidência**: um lugar para registrar o que foi feito e o que foi encontrado
+- **Auditabilidade**: uma trilha clara de decisões e ações
+
 ## Non-goals for MVP-0
 
 O MVP-0 é conservador e report-only. As seguintes funcionalidades são intencionalmente excluídas:

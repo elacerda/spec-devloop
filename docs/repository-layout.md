@@ -20,6 +20,85 @@ Este documento define o papel dos diretórios principais do repositório `spec-d
 
 Contém artefatos operacionais validáveis pelo CLI. É o diretório onde o `devloop` lê e escreve estado operacional.
 
+### Bootstrap mínimo do projeto
+
+Para iniciar um projeto, apenas um arquivo é obrigatório:
+
+```
+.ai-loop/project.md
+```
+
+Este arquivo contém a identidade do projeto e serve como âncora para todos os ciclos subsequentes.
+
+### Bootstrap mínimo de um ciclo com IA
+
+Para iniciar um ciclo com supervisão de IA, três arquivos são obrigatórios:
+
+```
+.ai-loop/project.md
+.ai-loop/cycles/<cycle-id>/meta.yaml
+.ai-loop/cycles/<cycle-id>/task.md
+```
+
+O arquivo `meta.yaml` contém metadados do ciclo (versão do schema, ID do ciclo, timestamp de criação, status). O arquivo `task.md` contém a descrição da tarefa.
+
+### Arquivos obrigatórios apenas para comandos com IA
+
+Para comandos que usam supervisão de IA, o seguinte arquivo é obrigatório:
+
+```
+.ai-loop/config/supervisor.yaml
+```
+
+Este arquivo configura a IA supervisora (modelo, provedor, parâmetros). Não é obrigatório para os comandos atuais report-only.
+
+### Arquivos recomendados, mas opcionais
+
+Os seguintes arquivos são recomendados, mas opcionais:
+
+```
+.ai-loop/architecture.md
+.ai-loop/protocol.md
+.ai-loop/config/commands.yaml
+.ai-loop/config/allowed_paths.yaml
+.ai-loop/config/providers.yaml
+.ai-loop/config/adapters.yaml
+.ai-loop/policies/
+.ai-loop/state/
+.ai-loop/memory/
+.ai-loop/templates/
+```
+
+Estes arquivos suportam fluxos de trabalho avançados, mas não são obrigatórios para iniciar o loop.
+
+### Layout evolutivo ideal de `.ai-loop/`
+
+O layout ideal evolui conforme as necessidades emergem:
+
+```
+.ai-loop/                    # v1: project.md
+.ai-loop/cycles/             # v1: ciclos manuais
+.ai-loop/state/              # v2: estado runtime
+.ai-loop/policies/           # v2: políticas
+.ai-loop/memory/             # v3: memória histórica
+.ai-loop/templates/          # v3: templates de produtividade
+.ai-loop/specs/              # v4+: specs gerenciadas no futuro
+```
+
+### O que NÃO deve ser obrigatório no bootstrap
+
+Os seguintes arquivos NÃO devem ser obrigatórios no bootstrap:
+
+- `.ai-loop/state/` — estado pode ser gerado sob demanda
+- `.ai-loop/policies/` — políticas podem ser adicionadas gradualmente
+- `.ai-loop/templates/` — templates são conveniência, não requisito
+- `.ai-loop/config/providers.yaml` — pode ter valor default "none"
+- `.ai-loop/config/adapters.yaml` — pode ter valor default "manual"
+- `.ai-loop/config/commands.yaml` — pode ter valor default "none"
+
+### Estrutura atual de `.ai-loop/`
+
+```
 Estrutura:
 - `project.md` - especificação do projeto
 - `architecture.md` - arquitetura do projeto
@@ -27,10 +106,17 @@ Estrutura:
 - `config/` - configurações operacionais
 - `cycles/` - instâncias concretas de ciclos
 - `state/` - estado operacional do CLI
+```
 
 **Importante:** `.ai-loop/` não deve ser usado como depósito genérico de documentação humana. Documentação conceitual e decisões de design devem viver em `docs/`.
 
 **Nota:** `.ai-loop/specs/` não existe no MVP-0. Especificações vivem em `docs/` até que a funcionalidade seja adicionada em versões futuras.
+
+### Estratégia de migração
+
+Os comandos atuais (`cycle check`, `cycle prompt`, `doctor`) devem continuar funcionando com a estrutura atual. A validação deve reportar warnings para arquivos ausentes que são recomendados, mas não erros (a menos que o comando específico os exija).
+
+O schema versioning é uma estratégia recomendada para evolução futura, não um requisito atual.
 
 ## .ai-loop/cycles/
 
