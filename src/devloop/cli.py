@@ -10,6 +10,7 @@ from devloop.cycle_check import run_cycle_check
 from devloop.cycle_list import list_cycles
 from devloop.cycle_new import run_cycle_new
 from devloop.cycle_prompt import run_cycle_prompt
+from devloop.cycle_set_status import run_cycle_set_status
 from devloop.cycle_summary import run_cycle_summary
 from devloop.doctor import (
     DEFAULT_EXIT_CODES,
@@ -91,6 +92,31 @@ def status() -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected status failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("set-status")
+def cycle_set_status(cycle_id: str, status: str) -> None:
+    """Update the status of a cycle."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_set_status(project_root, cycle_id, status)
+
+        if result.errors:
+            for error in result.errors:
+                typer.echo(f"error: {error}")
+            typer.echo(f"cycle id: {result.cycle_id}")
+            raise typer.Exit(code=2)
+
+        typer.echo(f"cycle id: {result.cycle_id}")
+        typer.echo(f"old status: {result.old_status}")
+        typer.echo(f"new status: {result.new_status}")
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected set-status failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
