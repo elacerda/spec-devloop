@@ -59,7 +59,7 @@ The MVP-0 CLI exposes report-only diagnostics:
 
 `devloop cycle list` is report-only and does not validate cycles. It lists only immediate subdirectories of `.ai-loop/cycles/`, without recursion. If `.ai-loop/cycles/` does not exist or is empty, the output is empty and the exit code is 0. Unexpected internal failures return exit code 3.
 
-Minimum manual cycle layout:
+Minimum manual cycle layout (MVP-0):
 
 ```text
 .ai-loop/cycles/<cycle-id>/
@@ -67,6 +67,36 @@ Minimum manual cycle layout:
   task.md
   report.md
 ```
+
+Arquivos futuros/opcionais:
+
+```text
+.ai-loop/cycles/<cycle-id>/
+  plan.md    # plano antes da execução (futuro)
+  evidence.md # evidências como testes, logs, revisão (futuro)
+```
+
+### Semântica dos arquivos
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `task.md` | Tarefa proposta - o que o usuário pretende alcançar |
+| `plan.md` | Plano antes da execução - opcional/futuro |
+| `report.md` | Relato do que foi feito, resultado e pendências |
+| `evidence.md` | Evidências como testes, comandos, logs ou revisão humana |
+
+### Estados conceituais futuros de ciclo
+
+Estes estados são conceituais e podem ser usados em `meta.yaml` ou comandos futuros:
+
+- `planned` - ciclo planejado, aguardando execução
+- `ready_for_worker` - pronto para ser executado por um worker
+- `in_progress` - execução em andamento
+- `waiting_review` - aguardando revisão
+- `completed` - ciclo concluído
+- `blocked` - ciclo bloqueado
+
+> **Nota:** Estes estados são futuros/conceituais. No MVP-0, o campo `status` em `meta.yaml` é livre e não validado pelo CLI.
 
 Example `meta.yaml`:
 
