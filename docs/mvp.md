@@ -1,49 +1,63 @@
-# MVP definition
+# MVP Definition
 
-## MVP goal
+This document separates the current conservative MVP-0 from the broader product MVP.
 
-The MVP should prove that a local CLI can validate specifications, create auditable development cycles, and generate reports without depending on any specific model or coding agent.
+## MVP-0: report-only foundation
 
-## MVP-0 (first deliverable): `devloop doctor`
-
-MVP-0 is the first implementation stage and includes only `devloop doctor` plus the minimum loader and validator behavior needed by doctor.
+MVP-0 proves that a local CLI can inspect and validate development-loop artifacts without side effects.
 
 MVP-0 must:
 
-1. verify minimum required specification files;
-2. parse and validate YAML configuration syntax;
-3. validate minimum schemas for config YAML files;
-4. report optional file presence;
-5. validate managed directories presence (report-only);
-6. detect git repository and worktree cleanliness (report-only);
-7. output severities (`info`, `warning`, `error`) and consistent exit code;
-8. avoid creating files or directories automatically.
+- validate minimum project structure;
+- validate cycle structure;
+- parse required YAML files;
+- validate minimal schemas;
+- report missing required files;
+- report optional file presence;
+- detect git state when relevant;
+- use stable exit codes;
+- avoid modifying files;
+- avoid calling models;
+- avoid calling agents;
+- avoid executing commands.
 
-MVP-0 must not:
+MVP-0 is intentionally conservative.
 
-- run tests, lint, format, or typecheck commands;
-- create cycles;
-- call model providers;
-- call external agent adapters;
-- modify repository files.
+It is not the final product experience.
 
-## MVP complete (after MVP-0)
+## MVP-0 current command set
 
-The complete MVP should include:
+- `devloop doctor`;
+- `devloop status`;
+- `devloop init --check`;
+- `devloop cycle list`;
+- `devloop cycle check <cycle-id>`;
+- `devloop cycle prompt <cycle-id>`;
+- `devloop cycle summary <cycle-id>`.
 
-1. Python CLI with command name `devloop`.
-2. Spec loader.
-3. Spec validator.
-4. `devloop doctor`.
-5. Basic `devloop status`.
-6. Cycle directory creation.
-7. Manual executor workflow.
-8. Markdown report generation.
-9. YAML and JSON state files.
-10. Git status and diff collection.
-11. Configured command execution.
+## Product MVP
 
-## MVP should not include
+The product MVP should demonstrate the real value proposition:
+
+> A supervisor AI can help drive a development loop from intent to implementation evidence, while `devloop` maintains state, contracts, and auditability.
+
+A product MVP should include:
+
+1. minimal project bootstrap;
+2. cycle creation from a user task;
+3. supervisor-generated next step;
+4. configurable task granularity;
+5. worker instructions;
+6. evidence/report capture;
+7. supervisor review;
+8. correction or acceptance decision;
+9. low-friction user experience.
+
+The product MVP may still be human-mediated, but it should clearly exercise the supervisor loop.
+
+## What MVP-0 should not include
+
+MVP-0 should not include:
 
 - autonomous code editing;
 - internal tool-calling agent;
@@ -51,60 +65,65 @@ The complete MVP should include:
 - direct Roo automation;
 - direct Continue automation;
 - direct Codex CLI automation;
-- model provider calls as a requirement;
+- required model provider calls;
 - MCP integration;
 - database;
 - web UI;
 - background daemon.
 
-## First command
+These are not excluded from the product. They are excluded from the initial report-only foundation.
 
-The first command to implement should be:
+## Product non-goals
 
-```bash
-devloop doctor
-```
+The product should not:
 
-It should:
-
-- verify required files;
-- parse YAML config;
-- report optional files;
-- validate managed directories;
-- detect git repository;
-- report whether the project is ready for manual cycles.
+- force users to write heavy documentation before starting;
+- require a specific model;
+- require a specific agent;
+- hide unsafe operations;
+- make unreviewable changes by default;
+- turn every workflow into microtasks;
+- assume cloud providers are required.
 
 ## Suggested milestones
 
-### Milestone 1: MVP-0 spec validation
+### Milestone 0: report-only foundation
 
-- initial CLI entrypoint;
-- spec path resolution;
-- YAML parsing;
-- doctor command;
-- tests for doctor behavior.
+- CLI entrypoint;
+- doctor/status/init check;
+- cycle list/check/prompt/summary;
+- tests;
+- documentation realignment.
 
-### Milestone 2: manual cycles
+### Milestone 1: low-friction cycle creation
 
-- create cycle;
-- write task template;
-- save plan;
-- review plan file presence;
-- collect report shell.
+- minimal init;
+- cycle new;
+- simple state;
+- status transitions;
+- better first-run UX.
 
-### Milestone 3: evidence collection
+### Milestone 2: supervisor-assisted loop
 
-- git status;
-- git diff;
-- configured command execution;
-- report generation.
+- supervisor config;
+- model call abstraction;
+- next-step generation;
+- task granularity profiles;
+- review generation.
 
-### Milestone 4: policy enforcement
+### Milestone 3: agent protocol
 
-- allowed path checks;
-- cycle type permissions;
-- spec-change restrictions.
+- JSON CLI;
+- evidence submission;
+- allowed paths contract;
+- command contract;
+- MCP/API/plugin experiments.
 
-### Milestone 5: optional model or adapters
+### Milestone 4: autonomous orchestration
 
-Only after the previous milestones are stable.
+- supervisor-run loop;
+- worker invocation;
+- evidence collection;
+- correction loop;
+- human checkpoints;
+- rollback and safety.

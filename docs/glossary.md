@@ -1,49 +1,81 @@
 # Glossary
 
-## spec-devloop
+## Agent
 
-The project name.
+A tool or process that can act on a task, usually by reading context, editing files, running commands, and reporting results.
 
-## devloop
+## Autonomous orchestrator mode
 
-The recommended CLI command.
-
-## Foundational specification
-
-A high-authority document that defines the project identity, architecture, protocol, or policies.
-
-## Operational configuration
-
-Machine-readable configuration used by the CLI, usually YAML.
+A future mode where `devloop` calls or embeds a supervisor AI and drives the development loop with limited human checkpoints.
 
 ## Cycle
 
-A bounded unit of AI-assisted development work.
+A bounded unit of development work.
 
-## Cycle artifact
+A cycle may include task, plan, execution, evidence, review, and final status.
 
-A file generated or collected during a cycle, such as task, plan, diff, test output, report, or decision.
+## Devloop
 
-## Agent
-
-A tool or participant that can produce plans or code changes. Examples include Cline, Codex CLI, Roo, Continue, Aider, humans, or future internal agents.
-
-## Adapter
-
-A module that translates the generic `spec-devloop` protocol into behavior suitable for a specific agent.
-
-## Model provider
-
-A source of model completions, such as no provider, vLLM, Ollama, OpenAI-compatible API, OpenAI API, Anthropic API, or another backend.
-
-## Manual executor
-
-The MVP executor. The CLI generates artifacts, the user interacts with an external tool manually, and then saves outputs back into the cycle.
-
-## Spec-change cycle
-
-A special cycle type allowed to change foundational specifications or policies.
+The local coordination layer that stores state, contracts, evidence, policies, and integration surfaces.
 
 ## Evidence
 
-Mechanical information used to verify a cycle, such as git diff, command outputs, test logs, and recorded decisions.
+Proof that a task was executed and validated.
+
+Examples:
+
+- test output;
+- command logs;
+- diff summary;
+- changed file list;
+- screenshots;
+- human review notes;
+- benchmark results.
+
+## Human/operator
+
+The person who defines intent, chooses autonomy level, approves sensitive decisions, and can override the system.
+
+## Manual mode
+
+A mode where the human mediates between supervisor and worker, often by copy/paste.
+
+## Model-agnostic
+
+The project does not depend on a specific model.
+
+## Agent-agnostic
+
+The project does not depend on a specific agent or editor tool.
+
+## Backend-agnostic
+
+The project does not depend on a specific provider or execution backend.
+
+## Supervisor/orchestrator
+
+The AI role that plans, decomposes, delegates, reviews, corrects, and advances the loop.
+
+## Worker/executor
+
+The role that performs implementation work, edits files, runs commands, and produces evidence.
+
+## Task granularity
+
+The size and ambition of each task delegated by the supervisor.
+
+## `micro`
+
+A careful task granularity profile with small tasks and frequent checkpoints.
+
+## `balanced`
+
+A moderate task granularity profile intended as a default.
+
+## `yolo`
+
+A high-autonomy task granularity profile with larger tasks and fewer checkpoints.
+
+## `torra-token` / `deep`
+
+A high-context, high-analysis task granularity profile for hard design, debugging, review, and architecture work.
