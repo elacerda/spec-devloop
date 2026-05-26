@@ -7,6 +7,7 @@ from pathlib import Path
 import typer
 
 from devloop.cycle_check import run_cycle_check
+from devloop.cycle_list import list_cycles
 from devloop.doctor import (
     DEFAULT_EXIT_CODES,
     SEVERITY_ERROR,
@@ -112,6 +113,22 @@ def init(check: bool = typer.Option(False, "--check", help="Run report-only init
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected init check failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("list")
+def cycle_list() -> None:
+    """List cycle IDs from .ai-loop/cycles/ directory."""
+    project_root = Path.cwd()
+    try:
+        cycle_ids = list_cycles(project_root)
+        for cycle_id in cycle_ids:
+            typer.echo(cycle_id)
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected cycle list failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
