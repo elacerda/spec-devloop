@@ -8,6 +8,7 @@ import typer
 
 from devloop.cycle_check import run_cycle_check
 from devloop.cycle_list import list_cycles
+from devloop.cycle_new import run_cycle_new
 from devloop.cycle_prompt import run_cycle_prompt
 from devloop.cycle_summary import run_cycle_summary
 from devloop.doctor import (
@@ -179,6 +180,31 @@ def cycle_prompt(cycle_id: str) -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected cycle prompt failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("new")
+def cycle_new(task_description: str) -> None:
+    """Create a new cycle with minimal structure."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_new(project_root, task_description)
+
+        if result.errors:
+            for error in result.errors:
+                typer.echo(f"error: {error}")
+            raise typer.Exit(code=2)
+
+        if result.cycle_dir is not None:
+            typer.echo(f"created cycle: {result.cycle_id}")
+            typer.echo(f"path: {result.cycle_dir.relative_to(project_root)}")
+            typer.echo("status: planned")
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected cycle new failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
