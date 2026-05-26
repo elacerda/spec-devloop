@@ -119,10 +119,13 @@ No model calls, no agent automation, and no code editing should be implemented b
 
 ## MVP-0 commands
 
-The MVP-0 CLI exposes two report-only commands:
+The MVP-0 CLI exposes report-only diagnostics:
 
 - `devloop doctor`: validates the local spec set, YAML files, minimal schemas, managed directories, and git state.
 - `devloop status`: reuses `doctor` and prints a short readiness summary with project root, readiness, finding counts, and git status.
+- `devloop init --check`: checks the minimum expected structure for manual setup and reports missing paths.
+
+`devloop init` without `--check` is intentionally conservative in MVP-0: automatic write mode is not supported yet and no files or directories are created.
 
 Both commands are conservative and report-only in MVP-0:
 
@@ -139,6 +142,7 @@ Minimum local run for MVP-0:
 python3 -m pip install -e .
 devloop doctor
 devloop status
+devloop init --check
 ```
 
 If `uv` is available, dependency sync can be done with:
