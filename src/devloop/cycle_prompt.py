@@ -77,8 +77,6 @@ def run_cycle_prompt(project_root: Path, cycle_id: str) -> CyclePromptResult:
     # Validate global required files
     global_required_files = [
         ".ai-loop/project.md",
-        ".ai-loop/architecture.md",
-        ".ai-loop/protocol.md",
     ]
     for rel_path in global_required_files:
         full_path = project_root / rel_path
@@ -97,12 +95,13 @@ def run_cycle_prompt(project_root: Path, cycle_id: str) -> CyclePromptResult:
     project_content = (project_root / ".ai-loop/project.md").read_text(
         encoding="utf-8"
     ).strip()
-    architecture_content = (project_root / ".ai-loop/architecture.md").read_text(
-        encoding="utf-8"
-    ).strip()
-    protocol_content = (project_root / ".ai-loop/protocol.md").read_text(
-        encoding="utf-8"
-    ).strip()
+    
+    # architecture.md e protocol.md são opcionais
+    architecture_path = project_root / ".ai-loop/architecture.md"
+    architecture_content = architecture_path.read_text(encoding="utf-8").strip() if architecture_path.is_file() else ""
+    
+    protocol_path = project_root / ".ai-loop/protocol.md"
+    protocol_content = protocol_path.read_text(encoding="utf-8").strip() if protocol_path.is_file() else ""
     task_content = (cycle_check_result.cycle_dir / "task.md").read_text(
         encoding="utf-8"
     ).strip()

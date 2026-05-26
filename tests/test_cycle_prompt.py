@@ -11,7 +11,13 @@ from devloop.cli import app
 
 runner = CliRunner()
 
+# Estrutura mínima (apenas project.md, sem architecture.md nem protocol.md)
 MINIMAL_PROJECT_FILES = {
+    ".ai-loop/project.md": "# Project\n\nThis is a test project.",
+}
+
+# Estrutura completa (com architecture.md e protocol.md)
+COMPLETE_PROJECT_FILES = {
     ".ai-loop/project.md": "# Project\n\nThis is a test project.",
     ".ai-loop/architecture.md": "# Architecture\n\nSimple architecture.",
     ".ai-loop/protocol.md": "# Protocol\n\nBasic protocol.",
@@ -38,6 +44,12 @@ def _make_min_cycle(tmp_path: Path, cycle_id: str = "c-001") -> None:
     cycle_dir = tmp_path / ".ai-loop" / "cycles" / cycle_id
     for rel, content in MINIMAL_CYCLE_FILES.items():
         _write(cycle_dir / rel, content)
+
+
+def _make_complete_project(tmp_path: Path) -> None:
+    """Cria estrutura completa com project.md, architecture.md e protocol.md."""
+    for rel, content in COMPLETE_PROJECT_FILES.items():
+        _write(tmp_path / rel, content)
 
 
 def _invoke_in_cwd(cwd: Path, args: list[str]) -> any:
@@ -77,7 +89,7 @@ def test_cycle_prompt_includes_project_content(tmp_path: Path) -> None:
 
 def test_cycle_prompt_includes_architecture_content(tmp_path: Path) -> None:
     """Prompt inclui architecture.md."""
-    _make_min_project(tmp_path)
+    _make_complete_project(tmp_path)
     _make_min_cycle(tmp_path, "c-001")
 
     result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
@@ -87,7 +99,7 @@ def test_cycle_prompt_includes_architecture_content(tmp_path: Path) -> None:
 
 def test_cycle_prompt_includes_protocol_content(tmp_path: Path) -> None:
     """Prompt inclui protocol.md."""
-    _make_min_project(tmp_path)
+    _make_complete_project(tmp_path)
     _make_min_cycle(tmp_path, "c-001")
 
     result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
@@ -245,3 +257,56 @@ def test_cycle_prompt_does_not_create_files(tmp_path: Path) -> None:
     _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
 
     assert not prompt_path.exists()
+
+
+def test_cycle_prompt_works_with_minimal_structure(tmp_path: Path) -> None:
+    """Prompt funciona com estrutura mínima (apenas project.md, sem architecture.md nem protocol.md)."""
+    # Criar apenas project.md (sem architecture.md e protocol.md)
+    _write(tmp_path / ".ai-loop/project.md", "# Project\n\nThis is a minimal project.")
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    assert "# Cycle Prompt: c-001" in result.stdout
+    assert "# Contexto do Projeto" in result.stdout
+    assert "# Arquitetura/Protocolo" in result.stdout
+    assert "# Objetivo da Microtarefa" in result.stdout
+    # O conteúdo do project.md deve estar presente
+    assert "This is a minimal project." in result.stdout
+
+
+def test_cycle_prompt_includes_architecture_when_exists(tmp_path: Path) -> None:
+    """Prompt inclui architecture.md quando existe (estrutura completa)."""
+    _make_complete_project(tmp_path)
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    assert "Simple architecture." in result.stdout
+
+
+def test_cycle_prompt_includes_protocol_when_exists(tmp_path: Path) -> None:
+    """Prompt inclui protocol.md quando existe (estrutura completa)."""
+    _make_complete_project(tmp_path)
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    assert "Basic protocol." in result.stdout
+
+
+def test_cycle_prompt_fails_without_project_md(tmp_path: Path) -> None:
+    """Prompt falha quando project.md está ausente."""
+    # Criar apenas architecture.md e protocol.md (sem project.md)
+    _write(tmp_path / ".ai-loop/architecture.md", "# Architecture\n\nTest.")
+    _write(tmp_path / ".ai-loop/protocol.md", "# Protocol\n\nTest.")
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 2
+    assert "error:" in result.stdout
+    assert "required global file missing: .ai-loop/project.md" in result.stdout
