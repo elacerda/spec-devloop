@@ -21,6 +21,7 @@ from devloop.doctor import (
     run_doctor,
 )
 from devloop.init_check import run_init_check
+from devloop.init_project import run_init_project
 
 app = typer.Typer(help="spec-devloop CLI")
 cycle_app = typer.Typer(help="Manual cycle report-only commands.")
@@ -95,28 +96,50 @@ def status() -> None:
 
 @app.command("init")
 def init(check: bool = typer.Option(False, "--check", help="Run report-only init checks.")) -> None:
-    """Run conservative init behavior for MVP-0."""
+    """Initialize or validate project structure for devloop."""
 
-    if not check:
-        typer.echo("error: automatic init write mode is not supported in MVP-0; use --check")
-        raise typer.Exit(code=2)
+    if check:
+        # Report-only mode: check structure without creating anything
+        project_root = Path.cwd()
+        try:
+            result = run_init_check(project_root)
+            for item in result.items:
+                state = "present" if item.present else "missing"
+                typer.echo(f"{item.path}: {state}")
+            typer.echo(f"project root: {result.project_root}")
+            typer.echo(f"missing: {result.missing_count}")
+            ready = "yes" if result.ready_for_manual_setup else "no"
+            typer.echo(f"ready_for_manual_setup: {ready}")
+            raise typer.Exit(code=0 if result.missing_count == 0 else 2)
+        except typer.Exit:
+            raise
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            typer.echo(f"error: unexpected init check failure: {exc}")
+            raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+    else:
+        # Write mode: create minimum project structure
+        project_root = Path.cwd()
+        try:
+            result = run_init_project(project_root)
 
-    project_root = Path.cwd()
-    try:
-        result = run_init_check(project_root)
-        for item in result.items:
-            state = "present" if item.present else "missing"
-            typer.echo(f"{item.path}: {state}")
-        typer.echo(f"project root: {result.project_root}")
-        typer.echo(f"missing: {result.missing_count}")
-        ready = "yes" if result.ready_for_manual_setup else "no"
-        typer.echo(f"ready_for_manual_setup: {ready}")
-        raise typer.Exit(code=0 if result.missing_count == 0 else 2)
-    except typer.Exit:
-        raise
-    except Exception as exc:  # pragma: no cover - defensive fallback
-        typer.echo(f"error: unexpected init check failure: {exc}")
-        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+            # Report created and preserved paths
+            typer.echo("initialized devloop project")
+            for path in result.created_paths:
+                typer.echo(f"created: {path}")
+            for path in result.preserved_paths:
+                typer.echo(f"preserved: {path}")
+
+            # Report any errors
+            for error in result.errors:
+                typer.echo(f"error: {error}")
+
+            # Exit with 0 on success, 2 if there were errors
+            raise typer.Exit(code=0 if not result.errors else 2)
+        except typer.Exit:
+            raise
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            typer.echo(f"error: unexpected init failure: {exc}")
+            raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
 @cycle_app.command("list")

@@ -56,13 +56,15 @@ def test_init_check_missing_managed_directory_returns_two(tmp_path: Path) -> Non
     assert result.exit_code == 2
 
 
-def test_init_without_check_is_explicit_failure(tmp_path: Path) -> None:
-    _make_min_project(tmp_path)
-
+def test_init_without_check_creates_project_structure(tmp_path: Path) -> None:
+    """Test that devloop init (without --check) creates the project structure."""
+    # Start with empty directory
     result = _invoke_init_in_cwd(tmp_path)
 
-    assert result.exit_code != 0
-    assert "not supported in MVP-0" in result.stdout
+    assert result.exit_code == 0
+    assert (tmp_path / ".ai-loop").is_dir()
+    assert (tmp_path / ".ai-loop/project.md").is_file()
+    assert (tmp_path / ".ai-loop/cycles").is_dir()
 
 
 def test_init_check_unexpected_failure_returns_three(tmp_path: Path, monkeypatch) -> None:
