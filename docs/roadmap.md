@@ -106,6 +106,27 @@ Possible features:
 
 This phase turns `devloop` into an autonomous or semi-autonomous orchestrator.
 
+## Future: Bootstrap flows and ingestion
+
+Short-term future (after MVP-0):
+
+The following commands are conceptual future interfaces, not current MVP-0 commands:
+
+- `devloop start "<idea>"`: Start from natural language description.
+- `devloop ingest <paths...>`: Ingest existing documentation.
+- `devloop start --from-ingested`: Start from previously ingested context.
+- `devloop start --from <path>`: Start from specific documentation files.
+- Automatic context synthesis from README, docs/, and project metadata.
+- AI supervisor interprets ideas and proposes vision, objectives, plan, and next task.
+
+Bootstrap flows should:
+
+- Require minimal manual setup;
+- Preserve existing documentation formats;
+- Extract context without requiring reformatting;
+- Allow human review and refinement of proposed context;
+- Support resumption from existing `.ai-loop/` state.
+
 ## Future: Safety, rollback, multi-agent workflows
 
 Longer-term capabilities:

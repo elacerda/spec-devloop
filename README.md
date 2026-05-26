@@ -175,3 +175,5 @@ devloop init --check
 | [Safety](docs/safety.md) | Safety, approval, permissions, and rollback principles. |
 | [Glossary](docs/glossary.md) | Terms used by the project. |
 | [Documentation Rewrite Plan](docs/documentation-rewrite-plan.md) | Suggested migration plan from current docs to the new narrative. |
+| [Bootstrap Flows](docs/bootstrap.md) | Future bootstrap entry points (idea-first, doc-first, resume). |
+| [Ingestion](docs/ingestion.md) | Documentation ingestion and context extraction mechanism. |
