@@ -51,8 +51,22 @@ O schema mínimo para `meta.yaml` é:
 schema_version: "0"
 cycle_id: c-001
 created_at: "2026-05-26"
-status: draft
+status: planned
 ```
+
+### status (obrigatório)
+
+O campo `status` é **obrigatório** e é validado pelo comando `devloop cycle check <cycle-id>`.
+
+Valores aceitos:
+- `planned`
+- `ready_for_worker`
+- `in_progress`
+- `waiting_review`
+- `completed`
+- `blocked`
+
+> **Nota para MVP-0**: O comando `devloop cycle check` continua report-only. Ele valida que `status` está na lista permitida (`planned`, `ready_for_worker`, `in_progress`, `waiting_review`, `completed`, `blocked`), mas não executa transições de estado nem modifica arquivos.
 
 ### Campos obrigatórios
 
