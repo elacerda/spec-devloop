@@ -18,7 +18,7 @@ MINIMAL_PROJECT_FILES = {
 }
 
 MINIMAL_CYCLE_FILES = {
-    "meta.yaml": "schema_version: '0'\ncycle_id: c-001\ncreated_at: '2026-05-26'\nstatus: draft\n",
+    "meta.yaml": "schema_version: '0'\ncycle_id: c-001\ncreated_at: '2026-05-26'\nstatus: planned\n",
     "task.md": "# Task\n\nImplement a simple feature.",
     "report.md": "# Report\n\nTask completed successfully.",
 }

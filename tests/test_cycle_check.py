@@ -31,7 +31,7 @@ def _make_valid_cycle(tmp_path: Path, cycle_id: str) -> None:
             "schema_version: \"1\"\n"
             f"cycle_id: \"{cycle_id}\"\n"
             "created_at: \"2026-01-01T00:00:00Z\"\n"
-            "status: \"draft\"\n"
+            "status: \"planned\"\n"
         ),
     )
     _write(cycle_dir / "task.md", "task\n")
@@ -340,3 +340,26 @@ def test_cycle_check_meta_cycle_id_case_sensitive_mismatch_returns_error(tmp_pat
 
     assert result.exit_code == 2
     assert "meta cycle_id does not match requested cycle id" in result.stdout
+
+
+def test_cycle_check_invalid_status_value_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: \"1\"\n"
+            "cycle_id: \"c-001\"\n"
+            "created_at: \"2026-01-01T00:00:00Z\"\n"
+            "status: \"invalid_status\"\n"
+        ),
+    )
+    _write(cycle_dir / "task.md", "task\n")
+    _write(cycle_dir / "report.md", "report\n")
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "invalid status value: invalid_status" in result.stdout
+    assert "Allowed values are:" in result.stdout

@@ -11,6 +11,15 @@ import yaml
 REQUIRED_CYCLE_FILES = ["meta.yaml", "task.md", "report.md"]
 REQUIRED_META_FIELDS = ["schema_version", "cycle_id", "created_at", "status"]
 
+ALLOWED_STATUS_VALUES = {
+    "planned",
+    "ready_for_worker",
+    "in_progress",
+    "waiting_review",
+    "completed",
+    "blocked",
+}
+
 
 @dataclass(frozen=True)
 class CycleCheckItem:
@@ -146,6 +155,13 @@ def _validate_meta_fields(meta: dict[str, Any], cycle_id: str) -> list[str]:
         value = meta[field]
         if not isinstance(value, str) or not value.strip():
             errors.append(f"required meta field must be non-empty string: {field}")
+            continue
+        if field == "status":
+            if value not in ALLOWED_STATUS_VALUES:
+                errors.append(
+                    f"invalid status value: {value}. "
+                    f"Allowed values are: {', '.join(sorted(ALLOWED_STATUS_VALUES))}"
+                )
 
     if "cycle_id" in meta and isinstance(meta["cycle_id"], str) and meta["cycle_id"] != cycle_id:
         errors.append("meta cycle_id does not match requested cycle id")
