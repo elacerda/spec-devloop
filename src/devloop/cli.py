@@ -9,6 +9,7 @@ import typer
 from devloop.cycle_check import run_cycle_check
 from devloop.cycle_list import list_cycles
 from devloop.cycle_prompt import run_cycle_prompt
+from devloop.cycle_summary import run_cycle_summary
 from devloop.doctor import (
     DEFAULT_EXIT_CODES,
     SEVERITY_ERROR,
@@ -178,6 +179,57 @@ def cycle_prompt(cycle_id: str) -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected cycle prompt failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("summary")
+def cycle_summary(cycle_id: str) -> None:
+    """Show a compact summary for a single cycle."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_summary(project_root, cycle_id)
+
+        typer.echo(f"cycle id: {result.cycle_id}")
+
+        if result.status is not None:
+            typer.echo(f"status: {result.status}")
+        else:
+            typer.echo("status: missing")
+
+        if result.created_at is not None:
+            # Extract date portion if datetime string
+            created_at_str = result.created_at
+            if "T" in created_at_str:
+                created_at_str = created_at_str.split("T")[0]
+            typer.echo(f"created_at: {created_at_str}")
+        else:
+            typer.echo("created_at: missing")
+
+        typer.echo("required files:")
+        for filename in ["meta.yaml", "task.md", "report.md"]:
+            state = "present" if result.required_files.get(filename, False) else "missing"
+            typer.echo(f"  {filename}: {state}")
+
+        typer.echo("optional files:")
+        for filename in ["plan.md", "evidence.md"]:
+            state = "present" if result.optional_files.get(filename, False) else "missing"
+            typer.echo(f"  {filename}: {state}")
+
+        typer.echo(f"errors: {len(result.errors)}")
+
+        # Display individual error messages
+        for error in result.errors:
+            typer.echo(f"  - {error}")
+
+        # Exit code 0 for valid cycle, 2 for validation errors
+        if result.errors:
+            raise typer.Exit(code=2)
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected cycle summary failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
