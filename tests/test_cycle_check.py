@@ -204,3 +204,139 @@ def test_cycle_check_unexpected_failure_returns_three(tmp_path: Path, monkeypatc
     result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
 
     assert result.exit_code == 3
+
+
+def test_cycle_check_unsafe_cycle_id_backslash_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "foo\\bar")
+
+    assert result.exit_code == 2
+    assert "unsafe cycle id: foo\\bar" in result.stdout
+
+
+def test_cycle_check_unsafe_cycle_id_empty_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "")
+
+    assert result.exit_code == 2
+    assert "unsafe cycle id:" in result.stdout
+
+
+def test_cycle_check_unsafe_cycle_id_whitespace_only_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "   ")
+
+    assert result.exit_code == 2
+    assert "unsafe cycle id:" in result.stdout
+
+
+def test_cycle_check_meta_yaml_null_field_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: null\n"
+            "cycle_id: \"c-001\"\n"
+            "created_at: \"2026-01-01T00:00:00Z\"\n"
+            "status: \"draft\"\n"
+        ),
+    )
+    _write(cycle_dir / "task.md", "task\n")
+    _write(cycle_dir / "report.md", "report\n")
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "required meta field must be non-empty string: schema_version" in result.stdout
+
+
+def test_cycle_check_meta_yaml_whitespace_field_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: \"1\"\n"
+            "cycle_id: \"c-001\"\n"
+            "created_at: \"   \"\n"
+            "status: \"draft\"\n"
+        ),
+    )
+    _write(cycle_dir / "task.md", "task\n")
+    _write(cycle_dir / "report.md", "report\n")
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "required meta field must be non-empty string: created_at" in result.stdout
+
+
+def test_cycle_check_meta_yaml_non_string_field_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: 1\n"
+            "cycle_id: \"c-001\"\n"
+            "created_at: \"2026-01-01T00:00:00Z\"\n"
+            "status: \"draft\"\n"
+        ),
+    )
+    _write(cycle_dir / "task.md", "task\n")
+    _write(cycle_dir / "report.md", "report\n")
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "required meta field must be non-empty string: schema_version" in result.stdout
+
+
+def test_cycle_check_missing_task_and_report_returns_errors(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: \"1\"\n"
+            "cycle_id: \"c-001\"\n"
+            "created_at: \"2026-01-01T00:00:00Z\"\n"
+            "status: \"draft\"\n"
+        ),
+    )
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "required artifact missing: task.md" in result.stdout
+    assert "required artifact missing: report.md" in result.stdout
+
+
+def test_cycle_check_meta_cycle_id_case_sensitive_mismatch_returns_error(tmp_path: Path) -> None:
+    _make_min_project(tmp_path)
+    cycle_dir = tmp_path / ".ai-loop/cycles/c-001"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(
+        cycle_dir / "meta.yaml",
+        (
+            "schema_version: \"1\"\n"
+            "cycle_id: \"C-001\"\n"
+            "created_at: \"2026-01-01T00:00:00Z\"\n"
+            "status: \"draft\"\n"
+        ),
+    )
+    _write(cycle_dir / "task.md", "task\n")
+    _write(cycle_dir / "report.md", "report\n")
+
+    result = _invoke_cycle_check_in_cwd(tmp_path, "c-001")
+
+    assert result.exit_code == 2
+    assert "meta cycle_id does not match requested cycle id" in result.stdout

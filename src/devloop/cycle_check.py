@@ -113,6 +113,8 @@ def _is_safe_cycle_id(cycle_id: str) -> bool:
 
     if cycle_id in {".", ".."}:
         return False
+    if not cycle_id or not cycle_id.strip():
+        return False
     if "/" in cycle_id or "\\" in cycle_id:
         return False
     return True
