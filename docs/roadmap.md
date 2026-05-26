@@ -34,9 +34,12 @@ Goal: reduce manual setup and make cycles easier to create and manage.
 
 Implemented or in progress:
 
+- `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
 - `devloop cycle new "<task description>"`.
 
-This command creates cycle directories and files automatically, moving beyond the report-only nature of MVP-0.
+`devloop init` is a low-friction setup command that creates the basic project structure without calling AI or executing external commands. It is idempotent and preserves existing files.
+
+This moves beyond the report-only nature of MVP-0 by enabling actual project initialization.
 
 ## MVP-2: Supervisor model calls
 

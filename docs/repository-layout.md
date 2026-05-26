@@ -36,15 +36,59 @@ It should not become a heavy documentation burden.
 
 The ideal minimal bootstrap should require as little as possible.
 
-Conceptually:
+### Current implementation
+
+The `devloop init` command (without `--check`) creates the minimum project structure:
 
 ```text
-.ai-loop/project.md
+.ai-loop/
+├── project.md
+└── cycles/
 ```
 
-This file anchors the project identity.
+- `.ai-loop/`: root directory for project state.
+- `.ai-loop/project.md`: project identity file with a simple placeholder.
+- `.ai-loop/cycles/`: directory for development cycles.
 
-Future commands such as `devloop init` or `devloop start "<idea>"` should be able to create or update this structure.
+### Behavior
+
+- **Idempotent**: running `devloop init` multiple times is safe.
+- **Preserves existing files**: if `.ai-loop/`, `.ai-loop/project.md`, or `.ai-loop/cycles/` already exist, they are preserved and not overwritten.
+- **No AI calls**: the command does not call any AI models.
+- **No external commands**: the command does not execute any external commands.
+- **Local only**: all files are created within `.ai-loop/`.
+
+### Output
+
+When successful, `devloop init` reports:
+
+```bash
+initialized devloop project
+created: .ai-loop
+created: .ai-loop/project.md
+created: .ai-loop/cycles
+```
+
+If files already exist, they are listed as preserved:
+
+```bash
+initialized devloop project
+created: .ai-loop
+preserved: .ai-loop/project.md
+created: .ai-loop/cycles
+```
+
+### Placeholder content
+
+`project.md` receives a simple, editable placeholder:
+
+```markdown
+# Project
+
+Describe the project here.
+```
+
+This provides a starting point for users to define their project without requiring heavy documentation upfront.
 
 ## Minimal cycle layout
 

@@ -143,7 +143,8 @@ MVP-0 commands:
 
 - `devloop doctor`: validates local project readiness.
 - `devloop status`: prints a compact readiness summary.
-- `devloop init --check`: checks the expected minimum structure without creating it.
+- `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
+- `devloop init --check`: checks the expected minimum structure without creating it (report-only).
 - `devloop cycle list`: lists cycle IDs.
 - `devloop cycle check <cycle-id>`: validates the structure of one cycle.
 - `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution.

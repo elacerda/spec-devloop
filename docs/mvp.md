@@ -97,11 +97,13 @@ The product should not:
 
 ### Milestone 1: low-friction cycle creation
 
-- minimal init;
-- cycle new;
-- simple state;
+- `devloop init`: creates minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
+- `devloop cycle new`: creates a new cycle with minimal structure.
+- simple state management;
 - status transitions;
 - better first-run UX.
+
+`devloop init` is idempotent, preserves existing files, does not call AI models, and does not execute external commands.
 
 ### Milestone 2: supervisor-assisted loop
 
