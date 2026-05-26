@@ -117,6 +117,20 @@ It should validate the minimum required specification set, inspect optional file
 
 No model calls, no agent automation, and no code editing should be implemented before the local spec validation layer is reliable.
 
+## MVP-0 commands
+
+The MVP-0 CLI exposes two report-only commands:
+
+- `devloop doctor`: validates the local spec set, YAML files, minimal schemas, managed directories, and git state.
+- `devloop status`: reuses `doctor` and prints a short readiness summary with project root, readiness, finding counts, and git status.
+
+Both commands are conservative and report-only in MVP-0:
+
+- they do not create files or directories;
+- they do not call models;
+- they do not call agents;
+- they do not execute configured commands.
+
 ## Local MVP-0 usage
 
 Minimum local run for MVP-0:
@@ -124,6 +138,7 @@ Minimum local run for MVP-0:
 ```bash
 python3 -m pip install -e .
 devloop doctor
+devloop status
 ```
 
 If `uv` is available, dependency sync can be done with:
