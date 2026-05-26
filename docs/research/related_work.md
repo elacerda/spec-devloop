@@ -69,6 +69,40 @@ These tools are possible executors.
 They should not be core dependencies.
 ```
 
+
+## Superpowers
+
+Relevant ideas:
+
+- explicit agent workflows for brainstorming, planning, testing, debugging, reviewing, and finishing work;
+- skill-based guidance that changes how coding agents behave during development;
+- strong emphasis on planning before implementation;
+- test-driven development and code review as mandatory workflow steps;
+- use of isolated worktrees and subagents to reduce context pollution and execution risk.
+
+Potential influence:
+
+- clearer cycle templates for common development modes;
+- stronger prompt exports for manual or external executors;
+- future compatibility with skill-based agent workflows;
+- better separation between planning, implementation, review, and final evidence collection.
+
+Positioning:
+
+```text
+Superpowers improves how coding agents behave.
+spec-devloop governs the local development cycle around any executor,
+including agents that use Superpowers-style workflows.
+```
+
+Relationship:
+
+```text
+Complementary, not competing.
+Superpowers can be treated as an executor-side methodology.
+spec-devloop should remain an external governance and evidence layer.
+```
+
 ## SWE-agent, mini-swe-agent, OpenHands
 
 Relevant ideas:
