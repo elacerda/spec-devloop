@@ -96,12 +96,29 @@ O comando retorna os seguintes códigos de saída:
 - **2**: erros de validação, o ciclo não atende aos requisitos mínimos.
 - **3**: falha interna inesperada, erro não previsto durante a execução.
 
+## Enumeração de ciclos
+
+Ciclos manuais podem ser enumerados com o comando:
+
+```bash
+devloop cycle list
+```
+
+Este comando lista subdiretórios imediatos de `.ai-loop/cycles/`, ordenados alfabeticamente. Ele não valida ciclos - apenas reporta a existência de diretórios. A saída vazia indica sucesso (exit 0), não erros.
+
+Para validação detalhada de um ciclo específico, continue usando:
+
+```bash
+devloop cycle check <cycle-id>
+```
+
+A validação detalhada verifica todos os requisitos do contrato de ciclo manual descrito neste documento.
+
 ## Non-goals for MVP-0
 
 O MVP-0 é conservador e report-only. As seguintes funcionalidades são intencionalmente excluídas:
 
 - sem `cycle new`
-- sem `cycle list`
 - sem `cycle status`
 - sem templates automáticos
 - sem alteração de `.ai-loop/state`

@@ -125,10 +125,13 @@ The MVP-0 CLI exposes report-only diagnostics:
 - `devloop status`: reuses `doctor` and prints a short readiness summary with project root, readiness, finding counts, and git status.
 - `devloop init --check`: checks the minimum expected structure for manual setup and reports missing paths.
 - `devloop cycle check <cycle-id>`: validates the minimum manual cycle layout under `.ai-loop/cycles/<cycle-id>/`.
+- `devloop cycle list`: lists immediate subdirectories of `.ai-loop/cycles/`, sorted alphabetically. Does not validate cycles. Returns empty output and exit 0 if the directory does not exist or is empty.
 
 `devloop init` without `--check` is intentionally conservative in MVP-0: automatic write mode is not supported yet and no files or directories are created.
 
 `devloop cycle check <cycle-id>` is report-only and does not create the cycle. The human must create the cycle directory and files manually before running the check. It validates only the minimum structural contract and returns `0` when there are no validation errors, `2` when validation errors are present, and `3` on unexpected internal failure.
+
+`devloop cycle list` is report-only and does not validate cycles. It lists only immediate subdirectories of `.ai-loop/cycles/`, without recursion. If `.ai-loop/cycles/` does not exist or is empty, the output is empty and the exit code is 0. Unexpected internal failures return exit code 3.
 
 Minimum manual cycle layout:
 
