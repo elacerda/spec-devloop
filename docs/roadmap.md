@@ -32,19 +32,11 @@ MVP-0 proves that the project can maintain local contracts before adding automat
 
 Goal: reduce manual setup and make cycles easier to create and manage.
 
-Possible features:
+Implemented or in progress:
 
-- `devloop init` to create minimal structure;
-- `devloop cycle new "<task>"`;
-- `devloop cycle update-status`;
-- state files under `.ai-loop/state/`;
-- safer defaults;
-- minimal project bootstrap;
-- better UX for first-time users.
+- `devloop cycle new "<task description>"`.
 
-Principle:
-
-The user should not need to manually create many files just to start.
+This command creates cycle directories and files automatically, moving beyond the report-only nature of MVP-0.
 
 ## MVP-2: Supervisor model calls
 

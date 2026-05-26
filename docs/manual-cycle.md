@@ -148,6 +148,80 @@ Prints a compact summary:
 
 It reuses cycle validation and remains report-only.
 
+### `devloop cycle new "<task description>"`
+
+Creates a new cycle with minimal structure.
+
+**Important: This is a post-MVP-0 / MVP-1 command**
+
+This command moves beyond the report-only nature of MVP-0 by creating cycle directories and files automatically. While it follows the same manual cycle contract, it is not part of the core MVP-0 functionality.
+
+**Purpose**
+
+This command is the first step toward low-friction cycle creation in MVP-1. It automates the creation of the cycle directory and required files, reducing manual setup while maintaining the manual cycle contract.
+
+**Behavior**
+
+- Creates `.ai-loop/cycles/` directory if it does not exist.
+- Finds the next sequential cycle ID (c-001, c-002, c-003, ...).
+- Considers only directories that match the exact pattern `c-NNN`.
+- Creates the cycle directory and three required files:
+  - `meta.yaml`
+  - `task.md`
+  - `report.md`
+
+**Files created**
+
+`meta.yaml`:
+```yaml
+schema_version: "0"
+cycle_id: c-001
+created_at: "2026-05-26"
+status: planned
+```
+
+Required fields:
+- `schema_version`: always "0" in MVP-0;
+- `cycle_id`: automatically assigned sequential ID;
+- `created_at`: today's date in YYYY-MM-DD format;
+- `status`: always "planned" on creation.
+
+`task.md`:
+- Contains the task description provided by the user.
+- Starts with `# Task` header.
+
+`report.md`:
+- Placeholder file for execution results.
+- Starts with `# Report` header and "No execution recorded yet."
+
+**Validation**
+
+- Returns exit code `0` on success.
+- Returns exit code `2` for expected errors (e.g., empty task description).
+- Returns exit code `3` for unexpected internal failures.
+
+**Important notes**
+
+- Does not call AI models.
+- Does not execute external commands.
+- Does not overwrite existing cycles (finds next available ID).
+- Purely deterministic; no external dependencies.
+
+**Example**
+
+```bash
+devloop cycle new "Implement user authentication endpoint"
+```
+
+Output:
+```
+created cycle: c-001
+path: .ai-loop/cycles/c-001
+status: planned
+```
+
+This command is part of the low-friction path toward MVP-1, not the core report-only MVP-0. It enables users to start development cycles with minimal friction while maintaining the manual cycle contract.
+
 ## Relationship to future modes
 
 The same cycle concept should support:

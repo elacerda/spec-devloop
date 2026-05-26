@@ -149,6 +149,12 @@ MVP-0 commands:
 - `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 
+### MVP-1 low-friction command
+
+- `devloop cycle new "<task description>"`: creates a new cycle with minimal structure.
+
+This is a post-MVP-0 command that enables low-friction cycle creation. It creates cycle directories and files automatically, moving beyond the report-only nature of MVP-0.
+
 ## Minimal local usage
 
 ```bash
