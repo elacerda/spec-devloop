@@ -124,10 +124,31 @@ The MVP-0 CLI exposes report-only diagnostics:
 - `devloop doctor`: validates the local spec set, YAML files, minimal schemas, managed directories, and git state.
 - `devloop status`: reuses `doctor` and prints a short readiness summary with project root, readiness, finding counts, and git status.
 - `devloop init --check`: checks the minimum expected structure for manual setup and reports missing paths.
+- `devloop cycle check <cycle-id>`: validates the minimum manual cycle layout under `.ai-loop/cycles/<cycle-id>/`.
 
 `devloop init` without `--check` is intentionally conservative in MVP-0: automatic write mode is not supported yet and no files or directories are created.
 
-Both commands are conservative and report-only in MVP-0:
+`devloop cycle check <cycle-id>` is report-only and does not create the cycle. The human must create the cycle directory and files manually before running the check. It validates only the minimum structural contract and returns `0` when there are no validation errors, `2` when validation errors are present, and `3` on unexpected internal failure.
+
+Minimum manual cycle layout:
+
+```text
+.ai-loop/cycles/<cycle-id>/
+  meta.yaml
+  task.md
+  report.md
+```
+
+Example `meta.yaml`:
+
+```yaml
+schema_version: "0"
+cycle_id: c-001
+created_at: "2026-05-26"
+status: draft
+```
+
+Both diagnostics are conservative and report-only in MVP-0:
 
 - they do not create files or directories;
 - they do not call models;
