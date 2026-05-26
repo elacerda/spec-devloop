@@ -114,6 +114,61 @@ devloop cycle check <cycle-id>
 
 A validação detalhada verifica todos os requisitos do contrato de ciclo manual descrito neste documento.
 
+## Geração de prompt para execução manual
+
+Um ciclo validado pode ser convertido em um prompt Markdown para execução por ferramentas externas de desenvolvimento assistido (Cline, Codex, Continue, Roo, Aider, etc.):
+
+```bash
+devloop cycle prompt <cycle-id>
+```
+
+Este comando:
+
+- **reutiliza** a validação de `devloop cycle check <cycle-id>`
+- **inclui** contexto do projeto (`.ai-loop/project.md`)
+- **inclui** arquitetura/protocolo (`.ai-loop/architecture.md`, `.ai-loop/protocol.md`)
+- **inclui** objetivo da microtarefa (`task.md`)
+- **inclui** comandos de aceite (`commands.yaml`, se presente)
+- **inclui** arquivos permitidos (`allowed_paths.yaml`, se presente)
+- **inclui** instruções conservadoras para o agente
+- **não inclui** o conteúdo de `report.md` por padrão
+
+### Arquivos obrigatórios
+
+- `.ai-loop/project.md`
+- `.ai-loop/architecture.md`
+- `.ai-loop/protocol.md`
+- `.ai-loop/cycles/<cycle-id>/meta.yaml`
+- `.ai-loop/cycles/<cycle-id>/task.md`
+- `.ai-loop/cycles/<cycle-id>/report.md`
+
+### Arquivos opcionais
+
+- `.ai-loop/config/commands.yaml`
+- `.ai-loop/config/allowed_paths.yaml`
+
+### Saída
+
+O comando imprime em stdout um prompt Markdown estruturado com as seções descritas acima. A saída é destinada a ser copiada e colada em ferramentas externas de desenvolvimento assistido.
+
+### Exit codes
+
+- **0**: ciclo válido, prompt gerado com sucesso.
+- **2**: erros de validação, o ciclo não atende aos requisitos mínimos.
+- **3**: falha interna inesperada, erro não previsto durante a execução.
+
+### Report-only guarantees
+
+O comando `devloop cycle prompt <cycle-id>` é conservador e report-only no MVP-0. Ele:
+
+- **não cria arquivos**
+- **não cria diretórios**
+- **não modifica arquivos**
+- **não executa commands.yaml**
+- **não chama modelos, agentes ou backends**
+
+Este comportamento garante que o comando seja seguro para execução e não cause efeitos colaterais indesejados.
+
 ## Non-goals for MVP-0
 
 O MVP-0 é conservador e report-only. As seguintes funcionalidades são intencionalmente excluídas:

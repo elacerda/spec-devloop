@@ -8,6 +8,7 @@ import typer
 
 from devloop.cycle_check import run_cycle_check
 from devloop.cycle_list import list_cycles
+from devloop.cycle_prompt import run_cycle_prompt
 from devloop.doctor import (
     DEFAULT_EXIT_CODES,
     SEVERITY_ERROR,
@@ -154,6 +155,29 @@ def cycle_check(cycle_id: str) -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected cycle check failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("prompt")
+def cycle_prompt(cycle_id: str) -> None:
+    """Generate a Markdown prompt for manual cycle execution."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_prompt(project_root, cycle_id)
+        if result.prompt is not None:
+            typer.echo(result.prompt)
+            raise typer.Exit(code=0)
+        if result.errors:
+            for error in result.errors:
+                typer.echo(f"error: {error}")
+            typer.echo(f"cycle id: {result.cycle_id}")
+            typer.echo(f"cycle dir: {result.cycle_dir}")
+        raise typer.Exit(code=2)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected cycle prompt failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
