@@ -39,6 +39,7 @@ It should treat tools such as Cline, Roo, Continue, Codex CLI, Aider, vLLM, Olla
 | [Vision](docs/vision.md) | Visão e princípios do projeto |
 | [Repository Layout](docs/repository-layout.md) | Layout mínimo e evolutivo de `.ai-loop/` |
 | [Manual Cycle](docs/manual-cycle.md) | Contrato de ciclo manual e relação com futuro loop supervisionado |
+| [Supervisor Config](docs/supervisor-config.md) | Configuração da IA supervisora (futuro) |
 | [Roadmap](docs/roadmap.md) | Roadmap de evolução do MVP-0 para versões futuras |
 
 ## MVP-0 commands

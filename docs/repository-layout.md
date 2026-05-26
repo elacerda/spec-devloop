@@ -42,15 +42,17 @@ Para iniciar um ciclo com supervisão de IA, três arquivos são obrigatórios:
 
 O arquivo `meta.yaml` contém metadados do ciclo (versão do schema, ID do ciclo, timestamp de criação, status). O arquivo `task.md` contém a descrição da tarefa.
 
-### Arquivos obrigatórios apenas para comandos com IA
+### Arquivos futuros/opcionais para workflows supervisionados por IA
 
-Para comandos que usam supervisão de IA, o seguinte arquivo é obrigatório:
+Os seguintes arquivos são **futuros/opcionais** e serão exigidos apenas quando comandos que dependam de IA supervisora forem implementados:
 
 ```
 .ai-loop/config/supervisor.yaml
 ```
 
-Este arquivo configura a IA supervisora (modelo, provedor, parâmetros). Não é obrigatório para os comandos atuais report-only.
+Este arquivo configura a IA supervisora (modelo, provedor, parâmetros). **Não é obrigatório no MVP-0**. O MVP-0 continua sendo report-only e não chama modelos.
+
+Para mais detalhes, veja `docs/supervisor-config.md`.
 
 ### Arquivos recomendados, mas opcionais
 
