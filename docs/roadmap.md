@@ -1,106 +1,154 @@
 # Roadmap
 
-## Visão geral
+This roadmap describes the evolution of `spec-devloop` from a report-only local CLI into a configurable AI orchestration layer.
 
-Este roadmap descreve a evolução do `spec-devloop` do MVP-0 (report-only) para versões futuras com integração de IA supervisora e executores.
+## MVP-0: Report-only foundation
 
-## MVP-0: Validação estrutural e artefatos report-only
+Goal: establish safe local foundations.
 
-**Objetivo**: Validar estrutura de projeto e ciclos, reportar status, sem executar IA ou automação.
+Characteristics:
 
-**Comandos**:
-- `devloop doctor` — validar projeto specs e local readiness
-- `devloop status` — mostrar resumo compacto de readiness
-- `devloop init --check` — reportar apenas checks de init
-- `devloop cycle list` — listar IDs de ciclos
-- `devloop cycle check <cycle-id>` — validar estrutura de ciclo
-- `devloop cycle summary <cycle-id>` — mostrar resumo compacto de ciclo
-- `devloop cycle prompt <cycle-id>` — gerar prompt Markdown para execução manual
+- no model calls;
+- no agent calls;
+- no command execution;
+- no file modification at runtime;
+- validates project and cycle structure;
+- emits summaries and context packets;
+- supports manual workflows.
 
-**Características**:
-- report-only: não cria, modifica ou executa nada
-- validação estrutural de arquivos YAML e Markdown
-- saída clara de erros e warnings
-- exit codes definidos (0=success, 2=validation error, 3=internal error)
+Implemented or in progress:
 
-**Não incluído**:
-- sem IA supervisora
-- sem execução de comandos
-- sem integração com modelos
-- sem automação
+- `devloop doctor`;
+- `devloop status`;
+- `devloop init --check`;
+- `devloop cycle list`;
+- `devloop cycle check <cycle-id>`;
+- `devloop cycle prompt <cycle-id>`;
+- `devloop cycle summary <cycle-id>`.
 
-## Fase 1: Geração de próximo passo/prompt
+MVP-0 proves that the project can maintain local contracts before adding automation.
 
-**Objetivo**: IA supervisora gera o próximo passo/prompt para o humano executar.
+## MVP-1: Low-friction cycles and state
 
-**Características**:
-- IA supervisora gera prompt para humano executar
-- humano executa fora da ferramenta
-- resultado é reportado pelo humano
-- configuração de modelo/provedor em `.ai-loop/config/supervisor.yaml`
+Goal: reduce manual setup and make cycles easier to create and manage.
 
-**Não incluído**:
-- sem execução automática
-- sem integração com executores
-- sem validação automática de resultado
+Possible features:
 
-## Fase 2: Revisão de plano e resultado
+- `devloop init` to create minimal structure;
+- `devloop cycle new "<task>"`;
+- `devloop cycle update-status`;
+- state files under `.ai-loop/state/`;
+- safer defaults;
+- minimal project bootstrap;
+- better UX for first-time users.
 
-**Objetivo**: IA supervisora revisa plano e resultado trazidos pelo humano.
+Principle:
 
-**Características**:
-- IA supervisora revisa plano e resultado
-- humano traz evidências de execução
-- IA supervisora recomenda aceite/rejeição/correção
-- humano aprova decisão final
+The user should not need to manually create many files just to start.
 
-**Não incluído**:
-- sem execução automática
-- sem integração com executores
-- sem validação automática de resultado
+## MVP-2: Supervisor model calls
 
-## Fase 3: Evidências e integração com providers
+Goal: allow a configured supervisor AI to generate next steps, plans, reviews, and corrections.
 
-**Objetivo**: Coletar evidências, realizar validações e integrar gradualmente com providers de modelo.
+Possible features:
 
-**Características**:
-- evidências são coletadas a partir de comandos, logs e ferramentas
-- IA supervisora interpreta evidências e valida resultado
-- IA supervisora gera relatório final
-- integração com providers de modelo (vLLM, Ollama, OpenAI, etc.)
+- `devloop supervisor check`;
+- `devloop next`;
+- `devloop plan`;
+- `devloop review`;
+- configurable supervisor model;
+- task granularity profiles;
+- model provider abstraction;
+- token and budget limits.
 
-**Não incluído**:
-- sem execução automática
-- sem integração com executores
-- sem automação completa
+The supervisor should be a real model call, not just a deterministic template.
 
-## Futuro: Integração direta com executores
+## MVP-3: Agent plugin / protocol mode
 
-**Objetivo**: Integração direta com executores, mantendo humano-no-loop.
+Goal: allow external agents to interact with `devloop` directly.
 
-**Características**:
-- IA supervisora integra com executores
-- humano monitora execução
-- humano aprova decisões críticas
-- humano revisa resultados
+Possible interfaces:
 
-**Não incluído**:
-- sem automação completa
-- sem humano-fora-do-loop
-- sem execução sem supervisão
+- CLI JSON mode;
+- local API;
+- MCP server;
+- file-based protocol;
+- plugins/adapters for agents.
 
-## Princípios de evolução
+Possible features:
 
-1. **Report-only primeiro**: MVP-0 é report-only para validar estrutura antes de automação
-2. **Humano-no-loop**: Humanos sempre aprovam decisões críticas
-3. **Model-agnostic**: Flexibilidade em escolher modelo/provedor
-4. **File-based**: Arquivos são a interface entre humanos e IA
-5. **Local-first**: Execução local, sem dependência de nuvem
-6. **Spec-first**: Especificações são a base para validação
+- get current task;
+- get allowed paths;
+- submit evidence;
+- submit report;
+- request review;
+- mark cycle status;
+- retrieve next action.
 
-## Non-goals
+This phase reduces copy/paste and makes `devloop` useful as a protocol layer.
 
-- Não transformar nomes provisórios de comandos em contrato
-- Não alterar código ou testes durante documentação
-- Não remover comandos existentes
-- Não implementar integração real com modelo durante documentação
+## MVP-4: Autonomous orchestrator
+
+Goal: allow `devloop` to run a supervised development loop.
+
+Possible features:
+
+- `devloop run`;
+- automatic cycle creation;
+- supervisor-driven task selection;
+- worker invocation;
+- evidence collection;
+- review loop;
+- correction loop;
+- human checkpoints;
+- pause/resume;
+- budget control.
+
+This phase turns `devloop` into an autonomous or semi-autonomous orchestrator.
+
+## Future: Bootstrap flows and ingestion
+
+Short-term future (after MVP-0):
+
+The following commands are conceptual future interfaces, not current MVP-0 commands:
+
+- `devloop start "<idea>"`: Start from natural language description.
+- `devloop ingest <paths...>`: Ingest existing documentation.
+- `devloop start --from-ingested`: Start from previously ingested context.
+- `devloop start --from <path>`: Start from specific documentation files.
+- Automatic context synthesis from README, docs/, and project metadata.
+- AI supervisor interprets ideas and proposes vision, objectives, plan, and next task.
+
+Bootstrap flows should:
+
+- Require minimal manual setup;
+- Preserve existing documentation formats;
+- Extract context without requiring reformatting;
+- Allow human review and refinement of proposed context;
+- Support resumption from existing `.ai-loop/` state.
+
+## Future: Safety, rollback, multi-agent workflows
+
+Longer-term capabilities:
+
+- sandboxed execution;
+- branch management;
+- rollback strategy;
+- policy engine;
+- multi-worker orchestration;
+- task queue;
+- project memory;
+- long-horizon planning;
+- web UI;
+- background daemon;
+- richer evidence analysis.
+
+## Evolution principles
+
+1. **Start safe**: report-only first.
+2. **Reduce friction**: do not require heavy documentation for basic use.
+3. **Automate progressively**: manual mode, plugin mode, autonomous mode.
+4. **Keep humans in control**: require approval for sensitive decisions.
+5. **Stay agnostic**: no hard dependency on one model, provider, or agent.
+6. **Keep state local and inspectable**: prefer file-based contracts.
+7. **Make autonomy configurable**: support micro, balanced, yolo, and deep profiles.

@@ -1,49 +1,134 @@
 # Vision
 
-`spec-devloop` exists to make AI-assisted development more controlled, auditable, and resilient.
+`spec-devloop` exists to make AI-assisted development easier to control, automate, audit, and scale.
 
-The project is based on a simple observation: the most useful AI coding workflows often work best when a human keeps the loop small, reviews plans before execution, checks diffs and tests, and prevents the model from expanding scope.
+The project is based on a practical workflow:
 
-`spec-devloop` should capture that workflow as a local protocol.
+1. A human has a project, idea, bug, or implementation goal.
+2. A supervisor AI analyzes the project state and decides the next step.
+3. A worker AI or external agent implements that step.
+4. Evidence is collected.
+5. The supervisor reviews the result.
+6. The loop either corrects the task or advances to the next one.
 
-## What makes this project different
+The long-term goal is to make this loop automatic where safe, explicit where necessary, and always recoverable.
 
-It is not primarily a coding agent.
+## Product thesis
 
-It is a governance layer around coding agents, local models, remote models, or manual workflows.
+`spec-devloop` is not just a documentation validator and not merely a prompt generator.
+
+It is a local orchestration layer for AI-assisted development.
 
 It should help users answer:
 
-- What exactly is the current task?
-- What plan was approved?
-- What evidence proves the task was completed?
-- What files changed?
-- Which commands were run?
-- Did the agent stay inside scope?
-- Is it safe to move to the next cycle?
+- What are we building?
+- What is the current implementation goal?
+- What should happen next?
+- How large should the next task be?
+- Which files may the worker modify?
+- What evidence proves the task succeeded?
+- Should the result be accepted, corrected, or rolled back?
+- What is the next cycle?
 
-## Vision and principles
+## Model-agnostic is not model-less
 
-The project is governed by a set of principles that define its architecture and evolution.
+The project does not depend on a specific model or provider.
 
-### Model-agnostic is not model-less
+However, this does not mean that models are peripheral. The supervisor/orchestrator AI is central to the future product.
 
-The project does not depend on a specific model or provider. However, this does not mean the model is absent or irrelevant. On the contrary, the **supervisor AI is central** to the project: it defines scope, recommends acceptance or correction, and orchestrates the cycle. Model-agnostic means flexibility in choosing the model, not removing the model from the equation.
+`model-agnostic` means the user should be able to choose the model and backend:
 
-### `.ai-loop` starts minimal and grows evolutively
+- local vLLM model;
+- Ollama model;
+- OpenAI-compatible endpoint;
+- remote API;
+- future provider;
+- same model for supervisor and worker;
+- different models for supervisor and worker.
 
-The `.ai-loop/` directory should begin with the smallest possible set of files to start the loop, then grow as needs emerge. This avoids over-engineering and allows the project to evolve based on real usage, not assumptions.
+## Agent-agnostic is not agent-less
 
-### Separation of roles, not physical models
+The project should not depend on a specific external agent.
 
-The project separates **roles**, not physical models:
+However, agent integration is a core future direction.
 
-- **Supervisor/orchestrator**: defines scope, recommends acceptance or correction, orchestrates the cycle
-- **Worker/troubleshooter**: executes tasks, generates code, produces diffs
-- **Human**: approves plans, reviews evidence, decides when the cycle is complete
+A worker may be:
 
-The same model may act as supervisor in one step and worker in another. Models may be different or the same.
+- Cline;
+- Roo;
+- Continue;
+- Codex CLI;
+- Aider;
+- a custom script;
+- an MCP-enabled agent;
+- an internal worker implemented by `devloop`;
+- the same model used by the supervisor.
 
-### Deterministic prompt as auxiliary infrastructure
+## Roles, not necessarily different models
 
-The `devloop cycle prompt <cycle-id>` command is an auxiliary infrastructure: it provides a context packet, fallback, or deterministic prompt for manual execution. It is not the main future flow, nor is it an error or legacy to be removed.
+The project separates roles:
+
+- **Human/operator**: intent, preferences, approvals, risk decisions.
+- **Supervisor/orchestrator**: planning, decomposition, review, correction, advancement.
+- **Worker/executor**: implementation, command execution, tests, reports.
+- **Devloop**: persistent state, contracts, policies, evidence, integration surface.
+
+The same model may play multiple roles. The roles define responsibilities, not physical infrastructure.
+
+## Low-friction first
+
+The project must not turn AI-assisted development into bureaucracy.
+
+Documentation and specs should improve results, but basic usage should require little ceremony.
+
+A good user experience should allow:
+
+```bash
+devloop start "Build a CLI that consumes LSST alerts"
+devloop next
+devloop run
+```
+
+Those commands may not exist yet, but they express the target experience.
+
+The system should ask for more information only when needed, infer from local context when possible, and allow specs to grow incrementally.
+
+## Manual mode is not the final product
+
+The current human-mediated workflow is valuable:
+
+- it is safe;
+- it is debuggable;
+- it works before full automation exists;
+- it allows rapid design iteration.
+
+But it should be documented as a mode, not as the destination.
+
+The long-term direction is to automate the interactions between supervisor, worker, evidence collection, review, and next-step selection.
+
+## Human-governed autonomy
+
+The goal is not uncontrolled autonomy.
+
+The goal is configurable autonomy.
+
+Different projects may require different levels of control:
+
+- strict microtask mode;
+- balanced mode;
+- high-autonomy yolo mode;
+- expensive deep-analysis mode.
+
+Humans should be able to decide how much autonomy to allow and where approval is mandatory.
+
+## Success criteria
+
+The project succeeds when a user can:
+
+1. describe an idea or point `devloop` at an existing project;
+2. let an AI supervisor build or update the implementation plan;
+3. choose a granularity profile;
+4. let workers execute cycles;
+5. review evidence and decisions;
+6. resume later without losing context;
+7. switch models or agents without rewriting the project workflow.

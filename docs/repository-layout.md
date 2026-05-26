@@ -1,12 +1,10 @@
 # Repository Layout
 
-## Purpose
-
-Este documento define o papel dos diretórios principais do repositório `spec-devloop` e esclarece a separação entre documentação humana e artefatos operacionais validáveis.
+This document defines the repository layout and the role of `.ai-loop/`.
 
 ## Top-level layout
 
-```
+```text
 .
 ├── .ai-loop/
 ├── docs/
@@ -16,172 +14,143 @@ Este documento define o papel dos diretórios principais do repositório `spec-d
 └── pyproject.toml
 ```
 
-## .ai-loop/
+## `.ai-loop/`
 
-Contém artefatos operacionais validáveis pelo CLI. É o diretório onde o `devloop` lê e escreve estado operacional.
+`.ai-loop/` contains operational state for the development loop.
 
-### Bootstrap mínimo do projeto
+It is where `devloop` reads and writes project-loop artifacts such as:
 
-Para iniciar um projeto, apenas um arquivo é obrigatório:
+- project identity;
+- cycles;
+- state;
+- policies;
+- model/agent configuration;
+- evidence;
+- memory.
 
-```
+`.ai-loop/` should be minimal at first and grow incrementally.
+
+It should not become a heavy documentation burden.
+
+## Minimal project bootstrap
+
+The ideal minimal bootstrap should require as little as possible.
+
+Conceptually:
+
+```text
 .ai-loop/project.md
 ```
 
-Este arquivo contém a identidade do projeto e serve como âncora para todos os ciclos subsequentes.
+This file anchors the project identity.
 
-### Bootstrap mínimo de um ciclo com IA
+Future commands such as `devloop init` or `devloop start "<idea>"` should be able to create or update this structure.
 
-Para iniciar um ciclo com supervisão de IA, três arquivos são obrigatórios:
+## Minimal cycle layout
 
-```
-.ai-loop/project.md
-.ai-loop/cycles/<cycle-id>/meta.yaml
-.ai-loop/cycles/<cycle-id>/task.md
-```
+Current MVP-0 cycle layout:
 
-O arquivo `meta.yaml` contém metadados do ciclo (versão do schema, ID do ciclo, timestamp de criação, status). O arquivo `task.md` contém a descrição da tarefa.
-
-### Arquivos futuros/opcionais para workflows supervisionados por IA
-
-Os seguintes arquivos são **futuros/opcionais** e serão exigidos apenas quando comandos que dependam de IA supervisora forem implementados:
-
-```
-.ai-loop/config/supervisor.yaml
-```
-
-Este arquivo configura a IA supervisora (modelo, provedor, parâmetros). **Não é obrigatório no MVP-0**. O MVP-0 continua sendo report-only e não chama modelos.
-
-Para mais detalhes, veja `docs/supervisor-config.md`.
-
-### Arquivos recomendados, mas opcionais
-
-Os seguintes arquivos são recomendados, mas opcionais:
-
-```
-.ai-loop/architecture.md
-.ai-loop/protocol.md
-.ai-loop/config/commands.yaml
-.ai-loop/config/allowed_paths.yaml
-.ai-loop/config/providers.yaml
-.ai-loop/config/adapters.yaml
-.ai-loop/policies/
-.ai-loop/state/
-.ai-loop/memory/
-.ai-loop/templates/
-```
-
-Estes arquivos suportam fluxos de trabalho avançados, mas não são obrigatórios para iniciar o loop.
-
-### Layout evolutivo ideal de `.ai-loop/`
-
-O layout ideal evolui conforme as necessidades emergem:
-
-```
-.ai-loop/                    # v1: project.md
-.ai-loop/cycles/             # v1: ciclos manuais
-.ai-loop/state/              # v2: estado runtime
-.ai-loop/policies/           # v2: políticas
-.ai-loop/memory/             # v3: memória histórica
-.ai-loop/templates/          # v3: templates de produtividade
-.ai-loop/specs/              # v4+: specs gerenciadas no futuro
-```
-
-### O que NÃO deve ser obrigatório no bootstrap
-
-Os seguintes arquivos NÃO devem ser obrigatórios no bootstrap:
-
-- `.ai-loop/state/` — estado pode ser gerado sob demanda
-- `.ai-loop/policies/` — políticas podem ser adicionadas gradualmente
-- `.ai-loop/templates/` — templates são conveniência, não requisito
-- `.ai-loop/config/providers.yaml` — pode ter valor default "none"
-- `.ai-loop/config/adapters.yaml` — pode ter valor default "manual"
-- `.ai-loop/config/commands.yaml` — pode ter valor default "none"
-
-### Estrutura atual de `.ai-loop/`
-
-```
-Estrutura:
-- `project.md` - especificação do projeto
-- `architecture.md` - arquitetura do projeto
-- `protocol.md` - protocolo de desenvolvimento
-- `config/` - configurações operacionais
-- `cycles/` - instâncias concretas de ciclos
-- `state/` - estado operacional do CLI
-```
-
-**Importante:** `.ai-loop/` não deve ser usado como depósito genérico de documentação humana. Documentação conceitual e decisões de design devem viver em `docs/`.
-
-**Nota:** `.ai-loop/specs/` não existe no MVP-0. Especificações vivem em `docs/` até que a funcionalidade seja adicionada em versões futuras.
-
-### Estratégia de migração
-
-Os comandos atuais (`cycle check`, `cycle prompt`, `doctor`) devem continuar funcionando com a estrutura atual. A validação deve reportar warnings para arquivos ausentes que são recomendados, mas não erros (a menos que o comando específico os exija).
-
-O schema versioning é uma estratégia recomendada para evolução futura, não um requisito atual.
-
-## .ai-loop/cycles/
-
-Contém instâncias concretas de ciclos manuais. Cada ciclo vive em um subdiretório identificado por um `cycle-id` único:
-
-```
+```text
 .ai-loop/cycles/<cycle-id>/
 ├── meta.yaml
 ├── task.md
 └── report.md
 ```
 
-No MVP-0:
-- ciclos são criados manualmente pelo usuário;
-- o contrato mínimo é documentado em `docs/manual-cycle.md`;
-- o comando `devloop cycle check <cycle-id>` valida a estrutura do ciclo.
+Optional/future cycle files:
 
-## docs/
+```text
+.ai-loop/cycles/<cycle-id>/
+├── plan.md
+├── evidence.md
+├── review.md
+└── worker.md
+```
 
-Contém documentação humana, contratos conceituais e decisões de design. Este diretório é para leitura e referência por humanos.
+## Conceptual future layout
 
-Arquivos típicos:
-- `README.md` - documentação geral do projeto
-- `manual-cycle.md` - contrato de ciclo manual
-- `mvp.md` - definição do MVP
-- `vision.md` - visão do projeto
-- `glossary.md` - glossário de termos
-- `decisions/` - registros de decisões de arquitetura (ADR)
-- `research/` - pesquisas e análise de trabalhos relacionados
+```text
+.ai-loop/
+├── project.md
+├── config/
+│   ├── supervisor.yaml
+│   ├── agents.yaml
+│   ├── commands.yaml
+│   └── allowed_paths.yaml
+├── cycles/
+│   └── <cycle-id>/
+│       ├── meta.yaml
+│       ├── task.md
+│       ├── plan.md
+│       ├── worker.md
+│       ├── report.md
+│       ├── evidence.md
+│       └── review.md
+├── state/
+│   ├── current.yaml
+│   └── history.jsonl
+├── policies/
+├── memory/
+└── templates/
+```
 
-**Importante:** `docs/` não é estado operacional. Não deve ser confundido com artefatos que o CLI valida diretamente. Documentação conceitual e decisões de design devem viver aqui, não em `.ai-loop/`.
+This is an evolutionary target, not a bootstrap requirement.
 
-## src/devloop/
+## Required versus optional
 
-Contém a implementação Python do CLI e dos backends puros.
+### Required for basic use
 
-Estrutura:
-- `cli.py` - entrada principal do CLI
-- `doctor.py` - implementação do comando `devloop doctor`
-- `status.py` - implementação do comando `devloop status`
-- `init_check.py` - implementação do comando `devloop init --check`
-- `cycle_check.py` - implementação do comando `devloop cycle check`
+- project identity;
+- current task or cycle.
 
-**Importante:** backends devem ser testáveis sem depender do CLI. Comandos devem permanecer report-only no MVP-0 quando aplicável.
+### Recommended for better results
 
-## tests/
+- acceptance criteria;
+- allowed paths;
+- test commands;
+- reports;
+- evidence.
 
-Contém testes automatizados que cobrem:
-- contratos públicos do CLI
-- validações de especificações
-- comportamento de backends
-- comandos implementados
+### Advanced
 
-Testes devem acompanhar novos comandos e validações. O objetivo é garantir que o CLI funcione corretamente sem depender de ferramentas externas.
+- model configuration;
+- agent adapters;
+- policy files;
+- memory;
+- templates;
+- autonomous orchestration state.
 
-## Non-goals for MVP-0
+## `docs/`
 
-O MVP-0 é conservador e report-only. As seguintes funcionalidades são intencionalmente excluídas:
+`docs/` contains human-facing documentation:
 
-- não introduzir `.ai-loop/specs/`
-- não mover documentação humana para `.ai-loop/`
-- não criar automação
-- não executar `commands.yaml`
-- não acoplar o projeto a agentes, modelos ou backends específicos
+- vision;
+- architecture;
+- roadmap;
+- contracts;
+- design decisions;
+- research.
 
-Estas funcionalidades podem ser adicionadas em versões futuras, após validação do MVP-0.
+`docs/` is not runtime state.
+
+## `src/devloop/`
+
+Contains the Python implementation.
+
+Backends should remain testable without the CLI.
+
+MVP-0 commands are report-only. Future commands may introduce controlled side effects behind explicit contracts and policies.
+
+## `tests/`
+
+Contains automated tests for CLI contracts, backends, validation behavior, and future orchestration components.
+
+## Design rule
+
+The repository layout should support progressive disclosure:
+
+- start with a small number of files;
+- add structure only when it creates value;
+- keep advanced configuration optional;
+- make state inspectable;
+- avoid turning the tool into documentation bureaucracy.
