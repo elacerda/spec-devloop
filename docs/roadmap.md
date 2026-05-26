@@ -14,6 +14,7 @@ Este roadmap descreve a evolução do `spec-devloop` do MVP-0 (report-only) para
 - `devloop init --check` — reportar apenas checks de init
 - `devloop cycle list` — listar IDs de ciclos
 - `devloop cycle check <cycle-id>` — validar estrutura de ciclo
+- `devloop cycle summary <cycle-id>` — mostrar resumo compacto de ciclo
 - `devloop cycle prompt <cycle-id>` — gerar prompt Markdown para execução manual
 
 **Características**:

@@ -183,6 +183,60 @@ O comando `devloop cycle prompt <cycle-id>` é conservador e report-only no MVP-
 
 Este comportamento garante que o comando seja seguro para execução e não cause efeitos colaterais indesejados.
 
+## Cycle summary command
+
+O comando `devloop cycle summary <cycle-id>` exibe um resumo compacto de um ciclo manual, mostrando apenas o estado atual sem sugerir próximos passos ou modificar arquivos.
+
+### Comportamento
+
+- **report-only**: não cria, modifica ou executa nada
+- **reutiliza** a validação de `devloop cycle check <cycle-id>`
+- **mostra** resumo estruturado do ciclo
+- **não sugere** próximo passo
+- **não modifica** arquivos ou diretórios
+
+### Saída
+
+O comando imprime em stdout as seguintes informações:
+
+- **cycle id**: identificador do ciclo
+- **status**: estado atual do ciclo (ou `missing` se o ciclo não existir)
+- **created_at**: data de criação (ou `missing` se ausente)
+- **required files**: lista de arquivos obrigatórios com status (present/missing)
+- **optional files**: lista de arquivos opcionais com status (present/missing)
+- **errors**: número total de erros de validação
+
+### Arquivos obrigatórios
+
+- `meta.yaml`: metadados do ciclo
+- `task.md`: descrição da tarefa
+- `report.md`: relato da execução
+
+### Arquivos opcionais
+
+- `plan.md`: plano antes da execução (futuro)
+- `evidence.md`: evidências como testes, logs, revisão (futuro)
+
+Arquivos opcionais ausentes **não são erros** e não afetam o exit code.
+
+### Exit codes
+
+- **0**: ciclo válido, todas as validações passaram.
+- **2**: erros de validação, o ciclo não atende aos requisitos mínimos.
+- **3**: falha interna inesperada, erro não previsto durante a execução.
+
+### Report-only guarantees
+
+O comando `devloop cycle summary <cycle-id>` é conservador e report-only no MVP-0. Ele:
+
+- **não cria arquivos**
+- **não cria diretórios**
+- **não modifica arquivos**
+- **não executa commands.yaml**
+- **não chama modelos, agentes ou backends**
+
+Este comportamento garante que o comando seja seguro para execução e não cause efeitos colaterais indesejados.
+
 ## Relação com o futuro loop supervisionado
 
 O ciclo manual é a base para o futuro loop supervisionado por IA. As mesmas estruturas de arquivo (`meta.yaml`, `task.md`, `report.md`) serão reutilizadas, mas com novos significados e usos:
