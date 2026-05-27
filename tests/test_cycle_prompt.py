@@ -310,3 +310,65 @@ def test_cycle_prompt_fails_without_project_md(tmp_path: Path) -> None:
     assert result.exit_code == 2
     assert "error:" in result.stdout
     assert "required global file missing: .ai-loop/project.md" in result.stdout
+
+
+def test_cycle_prompt_shows_note_when_no_optional_files(tmp_path: Path) -> None:
+    """Prompt mostra nota útil quando nenhum arquivo opcional existe."""
+    _make_min_project(tmp_path)
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    # A seção deve existir, mas com a nota
+    assert "## Arquitetura/Protocolo" in result.stdout
+    assert "No architecture/protocol/config files found" in result.stdout
+    # Não deve haver conteúdo vazio (duas quebras de linha seguidas após o título)
+    lines = result.stdout.split("\n")
+    for i, line in enumerate(lines):
+        if line == "## Arquitetura/Protocolo":
+            # A próxima linha deve ser a nota, não uma linha vazia
+            assert i + 1 < len(lines)
+            assert lines[i + 1].strip() != "" or lines[i + 2].strip() != ""
+
+
+def test_cycle_prompt_renders_note_instead_of_empty_optional_content(tmp_path: Path) -> None:
+    """Prompt renderiza nota útil no lugar de seção vazia quando nenhum arquivo opcional existe."""
+    _make_min_project(tmp_path)
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    # A seção ## Arquitetura/Protocolo deve existir, mas com a nota útil no lugar de conteúdo vazio
+    assert "## Arquitetura/Protocolo" in result.stdout
+    # A nota deve estar presente
+    assert "No architecture/protocol/config files found" in result.stdout
+
+
+def test_cycle_prompt_includes_architecture_when_exists_only(tmp_path: Path) -> None:
+    """Prompt inclui architecture.md quando apenas este existe."""
+    _write(tmp_path / ".ai-loop/project.md", "# Project\n\nTest project.")
+    _write(tmp_path / ".ai-loop/architecture.md", "# Architecture\n\nOnly architecture.")
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    assert "## Arquitetura/Protocolo" in result.stdout
+    assert "Only architecture." in result.stdout
+    assert "No architecture/protocol/config files found" not in result.stdout
+
+
+def test_cycle_prompt_includes_protocol_when_exists_only(tmp_path: Path) -> None:
+    """Prompt inclui protocol.md quando apenas este existe."""
+    _write(tmp_path / ".ai-loop/project.md", "# Project\n\nTest project.")
+    _write(tmp_path / ".ai-loop/protocol.md", "# Protocol\n\nOnly protocol.")
+    _make_min_cycle(tmp_path, "c-001")
+
+    result = _invoke_in_cwd(tmp_path, ["cycle", "prompt", "c-001"])
+
+    assert result.exit_code == 0
+    assert "## Arquitetura/Protocolo" in result.stdout
+    assert "Only protocol." in result.stdout
+    assert "No architecture/protocol/config files found" not in result.stdout

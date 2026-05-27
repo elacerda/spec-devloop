@@ -119,13 +119,20 @@ def run_cycle_prompt(project_root: Path, cycle_id: str) -> CyclePromptResult:
     sections.append(project_content)
     sections.append("")
 
-    # Arquitetura/Protocolo
-    sections.append("## Arquitetura/Protocolo")
-    sections.append("")
-    sections.append(architecture_content)
-    sections.append("")
-    sections.append(protocol_content)
-    sections.append("")
+    # Arquitetura/Protocolo (apenas se pelo menos um arquivo existir)
+    if architecture_content or protocol_content:
+        sections.append("## Arquitetura/Protocolo")
+        sections.append("")
+        sections.append(architecture_content)
+        sections.append("")
+        sections.append(protocol_content)
+        sections.append("")
+    else:
+        # Nota quando nenhum arquivo opcional existe
+        sections.append("## Arquitetura/Protocolo")
+        sections.append("")
+        sections.append("No architecture/protocol/config files found. Proceed using project context and task only.")
+        sections.append("")
 
     # Objetivo da Microtarefa
     sections.append("## Objetivo da Microtarefa")
