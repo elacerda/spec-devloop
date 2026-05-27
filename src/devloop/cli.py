@@ -7,6 +7,7 @@ from pathlib import Path
 import typer
 
 from devloop.cycle_check import run_cycle_check
+from devloop.cycle_complete import run_cycle_complete
 from devloop.cycle_list import list_cycles
 from devloop.cycle_new import run_cycle_new
 from devloop.cycle_prompt import run_cycle_prompt
@@ -117,6 +118,31 @@ def cycle_set_status(cycle_id: str, status: str) -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected set-status failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("complete")
+def cycle_complete(cycle_id: str) -> None:
+    """Mark a cycle as completed."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_complete(project_root, cycle_id)
+
+        if result.errors:
+            for error in result.errors:
+                typer.echo(f"error: {error}")
+            typer.echo(f"cycle id: {result.cycle_id}")
+            raise typer.Exit(code=2)
+
+        typer.echo(f"cycle id: {result.cycle_id}")
+        typer.echo(f"old status: {result.old_status}")
+        typer.echo(f"new status: {result.new_status}")
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected complete failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
