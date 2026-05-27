@@ -37,8 +37,11 @@ Implemented or in progress:
 - `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
 - `devloop cycle new "<task description>"`.
 - `devloop cycle set-status <cycle-id> <status>`: updates the cycle status in `meta.yaml`.
+- `devloop cycle complete <cycle-id>`: marks a cycle as `completed`.
 
 `devloop cycle set-status` is a low-friction cycle management command that enables updating cycle status without manual file editing. It is idempotent and validates both the cycle ID and status values against the accepted list.
+
+`devloop cycle complete` is a convenience command equivalent to `devloop cycle set-status <cycle-id> completed`. It provides a shorter, more intuitive way to mark cycles as completed while preserving all other fields in `meta.yaml`.
 
 This moves beyond the report-only nature of MVP-0 by enabling actual cycle status management while preserving all other fields in `meta.yaml`.
 

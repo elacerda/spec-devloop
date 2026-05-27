@@ -236,6 +236,50 @@ devloop cycle set-status c-001 ready_for_worker
 
 This command is part of the low-friction path toward MVP-1, not the core report-only MVP-0. It enables users to update cycle status with minimal friction while maintaining the manual cycle contract.
 
+### `devloop cycle complete <cycle-id>`
+
+Marks a cycle as `completed`.
+
+**Important: This is a post-MVP-0 / MVP-1 command**
+
+This command is a convenience command for marking a cycle as `completed`. It updates only the `status` field in `meta.yaml` to `completed`, preserving all other fields.
+
+**Purpose**
+
+This command is part of the low-friction path toward MVP-1. It provides a shorter, more intuitive alternative to `devloop cycle set-status <cycle-id> completed` while maintaining the manual cycle contract.
+
+**Behavior**
+
+- Updates only the `status` field in `meta.yaml` to `completed`;
+- Preserves all other fields (`schema_version`, `cycle_id`, `created_at`);
+- Does not modify `task.md`;
+- Does not modify `report.md`;
+- Does not create cycles;
+- Does not create `meta.yaml`;
+- Is idempotent when the cycle is already `completed`;
+- Validates that `cycle-id` is safe (matches pattern `c-NNN`);
+- Does not add `completed_at` in this version.
+
+**Exit codes**
+
+- `0`: success;
+- `2`: validation error (e.g., invalid cycle-id);
+- `3`: internal error.
+
+**Example**
+
+```bash
+devloop cycle complete c-001
+```
+
+This command is equivalent to:
+
+```bash
+devloop cycle set-status c-001 completed
+```
+
+This command is part of the low-friction path toward MVP-1, not the core report-only MVP-0. It enables users to mark cycles as completed with minimal friction while maintaining the manual cycle contract.
+
 ### `devloop cycle new "<task description>"`
 
 Creates a new cycle with minimal structure.

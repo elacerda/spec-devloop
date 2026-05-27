@@ -149,14 +149,14 @@ MVP-0 commands:
 - `devloop cycle check <cycle-id>`: validates the structure of one cycle.
 - `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution. Requires a valid cycle and `.ai-loop/project.md`. Optional files (`.ai-loop/architecture.md`, `.ai-loop/protocol.md`, `.ai-loop/config/commands.yaml`, `.ai-loop/config/allowed_paths.yaml`) are included when present. Does not call AI or execute external commands.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
-- `devloop cycle set-status <cycle-id> <status>`: updates the cycle status in `meta.yaml`.
 
 ### MVP-1 low-friction cycle management
 
 - `devloop cycle new "<task description>"`: creates a new cycle with minimal structure.
 - `devloop cycle set-status <cycle-id> <status>`: updates the cycle status in `.ai-loop/cycles/<cycle-id>/meta.yaml`.
+- `devloop cycle complete <cycle-id>`: marks a cycle as `completed`. Equivalent to `devloop cycle set-status <cycle-id> completed`.
 
-This is a post-MVP-0 command that enables low-friction cycle creation. It creates cycle directories and files automatically, moving beyond the report-only nature of MVP-0.
+These are post-MVP-0 commands that enable low-friction cycle creation and state management, moving beyond the report-only nature of MVP-0.
 
 ## Minimal local usage
 
