@@ -24,29 +24,51 @@ The configuration should be:
 
 ## Minimal conceptual config
 
-A simple future config might look like:
+A simple future config can be expressed in `.ai-loop/config/models.yaml`:
 
 ```yaml
-schema_version: "0.1"
-
-orchestrator:
-  provider: openai-compatible
-  model: qwen-coder-next
-  endpoint: http://localhost:8000/v1
-  api_key_env: DEVLOOP_SUPERVISOR_API_KEY
-
-  profile: micro
-  max_output_tokens: 2048
-  temperature: 0.2
+schema_version: 1
 
 policy:
-  require_human_approval: true
-  allow_model_calls: true
-  allow_file_writes: false
-  allow_command_execution: false
+  model_calls_allowed: false
+  require_human_approval_for_model_calls: true
+  secrets_must_use_env: true
+  provider_specific_logic_allowed_in_core: false
+
+providers:
+  local_vllm:
+    type: openai_compatible
+    enabled: true
+    base_url: http://localhost:8000/v1
+    api_key:
+      mode: none
+      env: null
+    timeout_seconds: 60
+
+models:
+  qwen3_coder_next_local:
+    provider: local_vllm
+    model: qwen3-coder-next
+    enabled: true
+    aliases: [qwen3-coder-next, local-coder]
+    limits:
+      context_window_tokens: 65536
+      default_max_output_tokens: 2048
+
+roles:
+  supervisor:
+    model: qwen3_coder_next_local
+  reviewer:
+    same_as: supervisor
+
+preferences:
+  default_role: supervisor
+  default_profile: micro
 ```
 
 This is illustrative, not an implemented schema.
+
+This document does not assume model calls are enabled in MVP-0 or MVP-1.
 
 ## Roles
 
@@ -55,19 +77,16 @@ Future configuration may distinguish:
 ```yaml
 roles:
   supervisor:
-    provider: openai-compatible
-    model: qwen-coder-next
-
-  worker:
-    mode: external-agent
-    tool_hint: cline
+    model: qwen3_coder_next_local
+  worker_prompt:
+    same_as: supervisor
 ```
 
 The same model may be used for both roles.
 
 ```yaml
 roles:
-  worker:
+  worker_prompt:
     same_as: supervisor
 ```
 
@@ -76,8 +95,8 @@ roles:
 The supervisor should be configurable by profile:
 
 ```yaml
-orchestrator:
-  profile: micro
+preferences:
+  default_profile: micro
 ```
 
 Possible profiles:
@@ -100,11 +119,19 @@ The profile affects:
 
 Secrets must not be hardcoded.
 
-Use environment variables:
+Use environment-variable references:
 
 ```yaml
-api_key_env: DEVLOOP_SUPERVISOR_API_KEY
+api_key:
+  mode: required
+  env: DEVLOOP_SUPERVISOR_API_KEY
 ```
+
+Allowed values for `api_key.mode`:
+
+- `none`;
+- `optional`;
+- `required`.
 
 ## Policy
 
@@ -114,13 +141,8 @@ Example:
 
 ```yaml
 policy:
-  require_human_approval: true
-  allow_model_calls: true
-  allow_file_writes: false
-  allow_command_execution: false
-  allowed_paths:
-    - src/
-    - tests/
+  model_calls_allowed: false
+  require_human_approval_for_model_calls: true
 ```
 
 ## Safety defaults
@@ -144,3 +166,8 @@ Possible future commands:
 - `devloop run`.
 
 These commands do not exist in MVP-0 unless implemented separately.
+
+`devloop model ping` is explicitly out of the first implementation phase.
+
+`providers.yaml` is already documented for MVP-0 doctor validation. The future
+`models.yaml` contract is the richer model-role-preference configuration layer.

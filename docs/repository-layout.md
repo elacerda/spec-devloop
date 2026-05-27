@@ -120,7 +120,8 @@ Optional/future cycle files:
 │   ├── supervisor.yaml
 │   ├── agents.yaml
 │   ├── commands.yaml
-│   └── allowed_paths.yaml
+│   ├── allowed_paths.yaml
+│   └── models.yaml
 ├── cycles/
 │   └── <cycle-id>/
 │       ├── meta.yaml
@@ -164,7 +165,7 @@ The following files are optional and included in the prompt when present:
 
 ### Advanced
 
-- model configuration;
+- model configuration (`.ai-loop/config/models.yaml`);
 - agent adapters;
 - policy files;
 - memory;

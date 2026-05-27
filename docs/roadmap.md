@@ -49,7 +49,23 @@ This moves beyond the report-only nature of MVP-0 by enabling actual cycle statu
 
 This moves beyond the report-only nature of MVP-0 by enabling actual project initialization.
 
-## MVP-2: Supervisor model calls
+## MVP-2: Declarative model configuration contract
+
+Goal: define a stable model/provider/role/preference contract before any direct model invocation.
+
+Possible features:
+
+- `.ai-loop/config/models.yaml` as the richer model configuration contract;
+- support for local OpenAI-compatible endpoints (for example, local vLLM);
+- explicit API key modes: `none`, `optional`, `required`;
+- role mapping and fallback ordering;
+- policy defaults with `model_calls_allowed: false`.
+
+This phase remains configuration-only and does not include network calls.
+
+`devloop model ping` is explicitly out of this first implementation phase.
+
+## MVP-3: Supervisor model calls
 
 Goal: allow a configured supervisor AI to generate next steps, plans, reviews, and corrections.
 
@@ -66,7 +82,7 @@ Possible features:
 
 The supervisor should be a real model call, not just a deterministic template.
 
-## MVP-3: Agent plugin / protocol mode
+## MVP-4: Agent plugin / protocol mode
 
 Goal: allow external agents to interact with `devloop` directly.
 
@@ -90,7 +106,7 @@ Possible features:
 
 This phase reduces copy/paste and makes `devloop` useful as a protocol layer.
 
-## MVP-4: Autonomous orchestrator
+## MVP-5: Autonomous orchestrator
 
 Goal: allow `devloop` to run a supervised development loop.
 
