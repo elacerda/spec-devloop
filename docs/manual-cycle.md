@@ -189,6 +189,53 @@ Prints a compact summary:
 
 It reuses cycle validation and remains report-only.
 
+### `devloop cycle set-status <cycle-id> <status>`
+
+Updates the cycle status in `.ai-loop/cycles/<cycle-id>/meta.yaml`.
+
+**Important: This is a post-MVP-0 / MVP-1 command**
+
+This command enables low-friction cycle status management. It updates only the status field while preserving all other fields in `meta.yaml`.
+
+**Purpose**
+
+This command is part of the low-friction path toward MVP-1, not the core report-only MVP-0. It enables users to update cycle status without manual file editing while maintaining the manual cycle contract.
+
+**Behavior**
+
+- Updates only the `status` field in `meta.yaml`;
+- Preserves all other fields (`schema_version`, `cycle_id`, `created_at`);
+- Does not modify `task.md`;
+- Does not modify `report.md`;
+- Does not create cycles;
+- Does not create `meta.yaml`;
+- Is idempotent when the requested status is already the current status;
+- Validates that `cycle-id` is safe (matches pattern `c-NNN`);
+- Validates that `status` is one of the accepted values.
+
+**Accepted status values**
+
+- `planned`;
+- `ready_for_worker`;
+- `in_progress`;
+- `waiting_review`;
+- `completed`;
+- `blocked`.
+
+**Exit codes**
+
+- `0`: success;
+- `2`: validation error (e.g., invalid cycle-id, invalid status);
+- `3`: internal error.
+
+**Example**
+
+```bash
+devloop cycle set-status c-001 ready_for_worker
+```
+
+This command is part of the low-friction path toward MVP-1, not the core report-only MVP-0. It enables users to update cycle status with minimal friction while maintaining the manual cycle contract.
+
 ### `devloop cycle new "<task description>"`
 
 Creates a new cycle with minimal structure.
