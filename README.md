@@ -158,6 +158,39 @@ MVP-0 commands:
 
 These are post-MVP-0 commands that enable low-friction cycle creation and state management, moving beyond the report-only nature of MVP-0.
 
+## Minimal manual cycle flow
+
+The current manual workflow follows this complete cycle:
+
+```bash
+devloop init
+devloop cycle new "Minha tarefa"
+devloop cycle summary c-001
+devloop cycle prompt c-001
+devloop cycle set-status c-001 ready_for_worker
+devloop cycle complete c-001
+devloop cycle summary c-001
+devloop cycle check c-001
+```
+
+**What happens in this flow:**
+
+- `init` creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
+- `cycle new` creates a new cycle with status `planned`.
+- `cycle summary` shows a compact state of the cycle.
+- `cycle prompt` generates a Markdown packet for manual execution by an external agent.
+- `cycle set-status` marks the cycle as `ready_for_worker` (or any valid status: `planned`, `ready_for_worker`, `in_progress`, `waiting_review`, `completed`, `blocked`).
+- `cycle complete` is a convenience command equivalent to `set-status completed`.
+- `cycle check` validates that the cycle structure remains intact.
+
+**Important notes:**
+
+- This flow does not call AI directly.
+- This flow does not execute external commands.
+- The human still mediates execution and review.
+- This is the manual/local-first mode.
+- Commands that modify state belong to MVP-1 / low-friction cycle management, not the core MVP-0 report-only commands.
+
 ## Minimal local usage
 
 ```bash

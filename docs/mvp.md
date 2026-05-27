@@ -105,6 +105,21 @@ The product should not:
 
 `devloop init` is idempotent, preserves existing files, does not call AI models, and does not execute external commands.
 
+**Minimal manual cycle flow:**
+
+```bash
+devloop init
+devloop cycle new "Minha tarefa"
+devloop cycle summary c-001
+devloop cycle prompt c-001
+devloop cycle set-status c-001 ready_for_worker
+devloop cycle complete c-001
+devloop cycle summary c-001
+devloop cycle check c-001
+```
+
+This is the minimal complete workflow enabled by MVP-1 commands. It does not call AI directly, does not execute external commands, and the human still mediates execution and review. This belongs to the manual/local-first mode.
+
 ### Milestone 2: supervisor-assisted loop
 
 - supervisor config;
