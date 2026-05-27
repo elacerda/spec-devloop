@@ -143,7 +143,6 @@ MVP-0 commands:
 
 - `devloop doctor`: validates local project readiness.
 - `devloop status`: prints a compact readiness summary.
-- `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
 - `devloop init --check`: checks the expected minimum structure without creating it (report-only).
 - `devloop cycle list`: lists cycle IDs.
 - `devloop cycle check <cycle-id>`: validates the structure of one cycle.
@@ -152,6 +151,7 @@ MVP-0 commands:
 
 ### MVP-1 low-friction cycle management
 
+- `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).
 - `devloop cycle new "<task description>"`: creates a new cycle with minimal structure.
 - `devloop cycle set-status <cycle-id> <status>`: updates the cycle status in `.ai-loop/cycles/<cycle-id>/meta.yaml`.
 - `devloop cycle complete <cycle-id>`: marks a cycle as `completed`. Equivalent to `devloop cycle set-status <cycle-id> completed`.
