@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from devloop.model_config import run_model_config_check
+
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"
 SEVERITY_ERROR = "error"
@@ -104,6 +106,11 @@ def run_doctor(project_root: Path) -> DoctorResult:
             findings.append(Finding(SEVERITY_INFO, f"yaml parsed: {rel}"))
         else:
             findings.append(Finding(SEVERITY_ERROR, f"invalid yaml: {rel}: {parsed}"))
+
+    # Integrate model config check (optional, report-only)
+    model_config_result = run_model_config_check(project_root)
+    for finding in model_config_result.findings:
+        findings.append(Finding(finding.severity, f"model config: {finding.message}"))
 
     commands_doc = yaml_docs.get(".ai-loop/config/commands.yaml")
     optional_files = FALLBACK_OPTIONAL_FILES

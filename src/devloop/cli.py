@@ -70,6 +70,21 @@ def _infer_git_status(findings: list[Finding]) -> str:
     return "unknown"
 
 
+def _infer_model_config_status(findings: list[Finding]) -> str:
+    """Infer model config status from doctor findings."""
+
+    model_config_findings = [
+        f for f in findings if f.message.startswith("model config: ")
+    ]
+    if not model_config_findings:
+        return "missing"
+    if any("optional file missing" in f.message for f in model_config_findings):
+        return "absent"
+    if any(f.severity == SEVERITY_ERROR for f in model_config_findings):
+        return "invalid"
+    return "valid"
+
+
 @app.command("status")
 def status() -> None:
     """Show a compact readiness summary derived from doctor findings."""
@@ -82,6 +97,7 @@ def status() -> None:
         info = sum(1 for item in result.findings if item.severity == SEVERITY_INFO)
         ready = "yes" if errors == 0 else "no"
         git_status = _infer_git_status(result.findings)
+        model_config_status = _infer_model_config_status(result.findings)
 
         typer.echo(f"project root: {project_root}")
         typer.echo(f"ready: {ready}")
@@ -89,6 +105,7 @@ def status() -> None:
         typer.echo(f"warnings: {warnings}")
         typer.echo(f"info: {info}")
         typer.echo(f"git: {git_status}")
+        typer.echo(f"model_config: {model_config_status}")
 
         raise typer.Exit(code=DEFAULT_EXIT_CODES["ok"] if errors == 0 else 2)
     except typer.Exit:

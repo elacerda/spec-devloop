@@ -249,3 +249,58 @@ def test_unexpected_failure_returns_three(tmp_path: Path, monkeypatch) -> None:
     result = _invoke_in_cwd(tmp_path)
 
     assert result.exit_code == 3
+
+
+VALID_MODELS_YAML = """\
+schema_version: 1
+providers:
+  openai:
+    type: openai_compatible
+    enabled: true
+    api_key:
+      mode: none
+models:
+  qwen3-coder-next-fp8:
+    provider: openai
+roles:
+  default:
+    model: qwen3-coder-next-fp8
+"""
+
+
+def test_doctor_missing_model_config_is_warning_not_error(tmp_path: Path) -> None:
+    """Missing models.yaml should not cause doctor to fail."""
+    _make_min_project(tmp_path)
+    (tmp_path / ".ai-loop/cycles").mkdir(parents=True)
+    (tmp_path / ".ai-loop/state").mkdir(parents=True)
+
+    result = _invoke_in_cwd(tmp_path)
+
+    assert result.exit_code == 0
+    assert "model config: optional file missing: .ai-loop/config/models.yaml" in result.stdout
+
+
+def test_doctor_valid_model_config_reports_ok(tmp_path: Path) -> None:
+    """Valid models.yaml should be reported as valid."""
+    _make_min_project(tmp_path)
+    _write(tmp_path / ".ai-loop/config/models.yaml", VALID_MODELS_YAML)
+    (tmp_path / ".ai-loop/cycles").mkdir(parents=True)
+    (tmp_path / ".ai-loop/state").mkdir(parents=True)
+
+    result = _invoke_in_cwd(tmp_path)
+
+    assert result.exit_code == 0
+    assert "model config: yaml parsed: .ai-loop/config/models.yaml" in result.stdout
+
+
+def test_doctor_invalid_model_config_reports_error(tmp_path: Path) -> None:
+    """Invalid models.yaml should report errors."""
+    _make_min_project(tmp_path)
+    _write(tmp_path / ".ai-loop/config/models.yaml", "schema_version: 2\n")
+    (tmp_path / ".ai-loop/cycles").mkdir(parents=True)
+    (tmp_path / ".ai-loop/state").mkdir(parents=True)
+
+    result = _invoke_in_cwd(tmp_path)
+
+    assert result.exit_code == 2
+    assert "model config: schema_version must be 1" in result.stdout
