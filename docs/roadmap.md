@@ -27,7 +27,7 @@ Implemented or in progress:
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
-- `devloop model ping <target> --allow-call`: model ping preparation CLI implemented. Real OpenAI-compatible HTTP transport remains a future milestone.
+- `devloop model ping <target> --allow-call`: performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized. See [Supervisor Config](docs/supervisor-config.md) for details on sanitized output, exit codes, and safety constraints.
 
 ### Model configuration
 

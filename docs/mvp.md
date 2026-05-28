@@ -36,7 +36,7 @@ It is not the final product experience.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
-- `devloop model ping <target> --allow-call`: prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). `attempted_transport: false`. Real HTTP transport remains future work.
+- `devloop model ping <target> --allow-call`: performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized. See [Supervisor Config](docs/supervisor-config.md) for details on sanitized output, exit codes, and safety constraints.
 
 ### Model configuration in MVP-0
 

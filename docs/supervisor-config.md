@@ -214,24 +214,7 @@ Lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml`.
 
 ### `devloop model ping`
 
-The `devloop model ping <target> --allow-call` command prepares a sanitized model ping request without performing network transport.
-
-**Current implementation status (MVP-0):**
-
-- **Preparation-only**: The command calls the backend preparation layer only. No HTTP/network calls are performed.
-- **No model invocation**: The command does not call a model yet.
-- **No config modification**: The command does not create or modify `.ai-loop/config/models.yaml`.
-- **Sanitized output**: The command prints sanitized metadata such as:
-  - `resolved_model`: the resolved model key (after role resolution)
-  - `backend_model`: the backend model identifier
-  - `provider`: the provider key
-  - `endpoint`: the provider base URL
-  - `timeout_seconds`: the timeout budget
-  - `auth`: the auth mode (`none`, `optional`, `required`)
-  - `auth_env`: the environment variable name (if configured)
-  - `auth_present`: whether an auth token is present in environment
-  - `attempted_transport: false` (no network call was performed)
-  - `note: no network call was performed`
+The `devloop model ping <target> --allow-call` command performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized.
 
 **Authorization requirements:**
 
@@ -246,11 +229,41 @@ The command requires **both** conditions to proceed:
 - Role names resolve before model names.
 - Unknown targets produce an error.
 
+**Sanitized success output:**
+
+On successful ping, the command outputs:
+
+- `result: ok`
+- `attempted_transport: true`
+- `transport: ok`
+- `resolved_model`: the resolved model key (after role resolution)
+- `backend_model`: the backend model identifier
+- `provider`: the provider key
+- `endpoint`: the final endpoint ending in `/chat/completions`
+- `timeout_seconds`: the timeout budget
+- `auth`: the auth mode (`none`, `optional`, `required`)
+- `auth_env`: the environment variable name (if configured)
+- `auth_present`: whether an auth token is present in environment
+
+**Failure behavior:**
+
+- **Config/usage/policy failures**: exit code 2, `attempted_transport: false`
+- **Runtime/network/HTTP/response failures**: exit code 3, `attempted_transport: true`, `transport: error`
+
+**Safety constraints:**
+
+- API keys are never printed.
+- Authorization headers are never printed.
+- Model response content is never printed.
+- No request payload, headers, or response is persisted to disk.
+- No config file is created or modified.
+
 **Security:**
 
-- API keys, Authorization headers, and secret values are never printed.
-- The command is local and read-only for the preparation layer.
+- The preparation layer is local/read-only; only the explicitly authorized transport step performs the network call.
+- All sensitive data (API keys, headers, responses) is sanitized before output.
+- No secrets are logged or persisted.
 
 **Future work:**
 
-Real OpenAI-compatible HTTP transport remains future work. The current implementation is preparation-only.
+Additional provider types and transport features may be added in future milestones.

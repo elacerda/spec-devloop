@@ -150,7 +150,7 @@ MVP-0 commands:
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
-- `devloop model ping <target> --allow-call`: prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). See [Supervisor Config](docs/supervisor-config.md) for details.
+- `devloop model ping <target> --allow-call`: performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized. See [Supervisor Config](docs/supervisor-config.md) for details.
 
 ### Model configuration
 
@@ -164,7 +164,7 @@ All `devloop model` commands (`check`, `list`) are local and read-only.
 
 ### `devloop model ping`
 
-The `devloop model ping <target> --allow-call` command prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). Requires `policy.model_calls_allowed: true` in `.ai-loop/config/models.yaml` and the `--allow-call` flag. See [Supervisor Config](docs/supervisor-config.md) for details.
+The `devloop model ping <target> --allow-call` command performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized. Requires dual authorization: `policy.model_calls_allowed: true` in `.ai-loop/config/models.yaml` and the `--allow-call` CLI flag. See [Supervisor Config](docs/supervisor-config.md) for details on sanitized output, exit codes, and safety constraints.
 
 ### MVP-1 low-friction cycle management
 
