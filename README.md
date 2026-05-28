@@ -151,7 +151,7 @@ MVP-0 commands:
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
 - `devloop model ping <target> --allow-call`: performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized. See [Supervisor Config](docs/supervisor-config.md) for details on sanitized output, exit codes, and safety constraints.
-- `devloop cycle advise <cycle-id> [--role ROLE] --allow-call`: prepares a model-backed cycle advisory request without transport execution. Validates model config, cycle structure, and policy. Outputs sanitized metadata. No network call, no file mutation, no advisory text generated yet. See [Supervisor Config](docs/supervisor-config.md) for details on behavior, output shape, and safety constraints.
+- `devloop cycle advise <cycle-id> [--role ROLE] --allow-call`: runs an authorized model-backed advisory request using an OpenAI-compatible `/chat/completions` transport. Validates model config, cycle structure, policy, and explicit `--allow-call`; resolves role/model/provider; collects only allowlisted artifacts; prints sanitized metadata and advisory text to stdout. It remains advisory-only and does not mutate files, execute shell commands, invoke agents, persist payloads/responses, or print secrets. See [Supervisor Config](docs/supervisor-config.md) for details on behavior, output shape, and safety constraints.
 
 ### Model configuration
 
