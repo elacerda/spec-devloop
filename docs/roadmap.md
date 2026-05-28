@@ -18,15 +18,24 @@ Characteristics:
 
 Implemented or in progress:
 
-- `devloop doctor`;
-- `devloop status`;
-- `devloop init --check`;
-- `devloop cycle list`;
-- `devloop cycle check <cycle-id>`;
-- `devloop cycle prompt <cycle-id>`;
-- `devloop cycle summary <cycle-id>`;
-- `devloop model check`;
-- `devloop model list`.
+- `devloop doctor`: validates local project readiness, including optional `.ai-loop/config/models.yaml` validation.
+- `devloop status`: prints a compact readiness summary, including `model_config: absent|valid|invalid|missing`.
+- `devloop init --check`: checks the expected minimum structure without creating it (report-only).
+- `devloop cycle list`: lists cycle IDs.
+- `devloop cycle check <cycle-id>`: validates the structure of one cycle.
+- `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution.
+- `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
+- `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
+- `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
+
+### Model configuration
+
+The `.ai-loop/config/models.yaml` file is **optional**. Its absence is not a readiness failure.
+
+- **Missing config**: `devloop doctor` and `devloop status` continue to work; status shows `absent`.
+- **Invalid config**: If present but malformed or invalid, reported as an error.
+- **No network calls**: All validation is local and read-only.
+- **`devloop model ping`**: Not implemented; remains future work.
 
 MVP-0 proves that the project can maintain local contracts before adding automation.
 

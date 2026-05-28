@@ -151,6 +151,16 @@ MVP-0 commands:
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
 
+### Model configuration
+
+Model configuration is optional and report-only. The `.ai-loop/config/models.yaml` file defines providers, models, roles, and preferences for future AI orchestration. It does not trigger network calls or model invocations.
+
+- **Missing config**: Not a readiness failure. `devloop doctor` and `devloop status` continue to work without it.
+- **Invalid config**: If present but malformed or invalid, reported as an error.
+- **Status reporting**: `devloop status` reports `model_config: absent|valid|invalid|missing`.
+
+All `devloop model` commands (`check`, `list`) are local and read-only. `devloop model ping` remains future work.
+
 ### MVP-1 low-friction cycle management
 
 - `devloop init`: creates the minimum project structure (`.ai-loop/`, `.ai-loop/project.md`, `.ai-loop/cycles/`).

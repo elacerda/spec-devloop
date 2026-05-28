@@ -10,6 +10,14 @@ This configuration is future-facing.
 
 MVP-0 does not require it and does not call models.
 
+### Current implementation status
+
+The `.ai-loop/config/models.yaml` file is now integrated into MVP-0 as an **optional** declarative contract for model configuration. It is validated by `devloop doctor` and `devloop status` but is not required for project readiness.
+
+- **Optional file**: Missing `models.yaml` is not a readiness failure.
+- **Validation**: Invalid config is reported as an error.
+- **No network calls**: All validation is local and read-only.
+
 ## Design goals
 
 The configuration should be:
