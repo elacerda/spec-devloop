@@ -456,3 +456,50 @@ Failure behavior:
 - runtime, network, or model-response failures exit with code `3`,
   `attempted_transport: true`, and `transport: error`;
 - reported errors are sanitized and must not expose secrets.
+
+### Supervisor advisory output format
+
+`devloop cycle advise <cycle-id> [--role ROLE] --allow-call` prints model-generated
+advisory text to stdout after the sanitized command metadata.
+
+The supervisor prompt asks the model to use these sections:
+
+- `Summary`
+- `Readiness`
+- `Risks`
+- `Recommended next microtask`
+- `Validation commands`
+- `Open questions`
+
+This is a prompt-level output contract, not a strict parser-enforced schema. The
+CLI does not currently validate, transform, persist, or post-process these
+sections. The advisory is intentionally human-readable and stdout-only.
+
+The supervisor advisory should remain grounded in the provided `.ai-loop`
+project and cycle artifacts. It should prefer the current allowlisted cycle
+artifacts when recommending edits:
+
+- `meta.yaml`
+- `task.md`
+- `plan.md`
+- `prompt.md`
+- `summary.md`
+- `report.md`
+
+If a new artifact name is useful, the advisory should label it as a future
+schema extension rather than a current requirement.
+
+For validation commands, the advisory should prefer commands already used by the
+repository workflow, such as:
+
+```bash
+devloop model check
+devloop cycle check <cycle-id>
+devloop cycle advise <cycle-id> --role supervisor --allow-call
+python3 -m pytest -q
+git diff --check
+git status --short
+```
+
+The advisory should not recommend external tools unless they appear in the
+provided artifacts or project documentation.
