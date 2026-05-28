@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from devloop.cycle_check import run_cycle_check
 from devloop.model_config import run_model_config_check
+from devloop.model_resolution import resolve_role_model_key
 
 SEVERITY_INFO = "info"
 SEVERITY_ERROR = "error"
@@ -202,7 +203,14 @@ def run_cycle_advise(
     models = doc.get("models", {})
     providers = doc.get("providers", {})
 
-    resolved_model_key = _resolve_role_model_key(role, roles, findings)
+    resolved_model_key = resolve_role_model_key(
+        role_name=role,
+        roles=roles,
+        add_finding=lambda severity, message, location, code: findings.append(
+            CycleAdviseFinding(severity, message, location=location, code=code)
+        ),
+        severity_error=SEVERITY_ERROR,
+    )
     if resolved_model_key is None:
         return CycleAdviseResult(False, False, findings, None)
 
@@ -259,64 +267,6 @@ def run_cycle_advise(
     )
     return CycleAdviseResult(True, False, findings, prepared)
 
-
-def _resolve_role_model_key(
-    role_name: str,
-    roles: Any,
-    findings: list[CycleAdviseFinding],
-) -> str | None:
-    if not isinstance(roles, dict) or role_name not in roles:
-        findings.append(CycleAdviseFinding(SEVERITY_ERROR, f"unknown role: {role_name}", code="role_unknown"))
-        return None
-
-    visited: set[str] = set()
-    current = role_name
-    while True:
-        if current in visited:
-            findings.append(
-                CycleAdviseFinding(
-                    SEVERITY_ERROR,
-                    f"role alias cycle detected at role: {current}",
-                    location=f"roles.{current}.same_as",
-                    code="role_cycle",
-                )
-            )
-            return None
-        visited.add(current)
-
-        role_data = roles.get(current)
-        if not isinstance(role_data, dict):
-            findings.append(CycleAdviseFinding(SEVERITY_ERROR, f"invalid role entry: {current}", code="role_invalid"))
-            return None
-
-        model_name = role_data.get("model")
-        if isinstance(model_name, str):
-            return model_name
-
-        same_as = role_data.get("same_as")
-        if isinstance(same_as, str):
-            if same_as not in roles:
-                findings.append(
-                    CycleAdviseFinding(
-                        SEVERITY_ERROR,
-                        f"unknown role alias target: {same_as}",
-                        location=f"roles.{current}.same_as",
-                        code="role_alias_missing",
-                    )
-                )
-                return None
-            current = same_as
-            continue
-
-        findings.append(
-            CycleAdviseFinding(
-                SEVERITY_ERROR,
-                f"role does not resolve to a model: {current}",
-                location=f"roles.{current}",
-                code="role_unresolved",
-            )
-        )
-        return None
 
 
 def _collect_input_artifacts(project_root: Path, cycle_id: str) -> tuple[str, ...]:

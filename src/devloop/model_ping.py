@@ -12,6 +12,7 @@ from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
 from devloop.model_config import run_model_config_check
+from devloop.model_resolution import resolve_role_model_key
 
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"
@@ -430,66 +431,18 @@ def _resolve_target_to_model_key(
     findings: list[ModelPingFinding],
 ) -> str | None:
     if isinstance(roles, dict) and target in roles:
-        return _resolve_role_model_key(target, roles, findings)
+        return resolve_role_model_key(
+            role_name=target,
+            roles=roles,
+            add_finding=lambda severity, message, location, code: findings.append(
+                ModelPingFinding(severity, message, location=location, code=code)
+            ),
+            severity_error=SEVERITY_ERROR,
+        )
     if isinstance(models, dict) and target in models:
         return target
     findings.append(ModelPingFinding(SEVERITY_ERROR, f"unknown target: {target}", code="target_unknown"))
     return None
-
-
-def _resolve_role_model_key(
-    role_name: str,
-    roles: dict[str, Any],
-    findings: list[ModelPingFinding],
-) -> str | None:
-    visited: set[str] = set()
-    current = role_name
-    while True:
-        if current in visited:
-            findings.append(
-                ModelPingFinding(
-                    SEVERITY_ERROR,
-                    f"role alias cycle detected at role: {current}",
-                    location=f"roles.{current}.same_as",
-                    code="role_cycle",
-                )
-            )
-            return None
-        visited.add(current)
-
-        role_data = roles.get(current)
-        if not isinstance(role_data, dict):
-            findings.append(ModelPingFinding(SEVERITY_ERROR, f"invalid role entry: {current}", code="role_invalid"))
-            return None
-
-        model_name = role_data.get("model")
-        if isinstance(model_name, str):
-            return model_name
-
-        same_as = role_data.get("same_as")
-        if isinstance(same_as, str):
-            if same_as not in roles:
-                findings.append(
-                    ModelPingFinding(
-                        SEVERITY_ERROR,
-                        f"unknown role alias target: {same_as}",
-                        location=f"roles.{current}.same_as",
-                        code="role_alias_missing",
-                    )
-                )
-                return None
-            current = same_as
-            continue
-
-        findings.append(
-            ModelPingFinding(
-                SEVERITY_ERROR,
-                f"role does not resolve to a model: {current}",
-                location=f"roles.{current}",
-                code="role_unresolved",
-            )
-        )
-        return None
 
 
 def _resolve_auth(
