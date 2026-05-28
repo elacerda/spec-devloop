@@ -25,7 +25,7 @@ from devloop.doctor import (
 from devloop.init_check import run_init_check
 from devloop.init_project import run_init_project
 from devloop.model_config import run_model_config_check
-from devloop.model_ping import run_model_ping
+from devloop.model_ping import execute_model_ping, run_model_ping
 
 app = typer.Typer(help="spec-devloop CLI")
 cycle_app = typer.Typer(help="Manual cycle report-only commands.")
@@ -455,10 +455,10 @@ def model_ping(
     allow_call: bool = typer.Option(
         False,
         "--allow-call",
-        help="Explicit runtime authorization to prepare a model ping request.",
+        help="Explicit runtime authorization to execute a model ping call.",
     ),
 ) -> None:
-    """Prepare a sanitized model ping request without performing network transport."""
+    """Execute an explicitly authorized sanitized model ping call."""
     project_root = Path.cwd()
     try:
         result = run_model_ping(project_root, target=target, allow_call=allow_call)
@@ -474,26 +474,46 @@ def model_ping(
                     typer.echo(f"error: {finding.location}: {finding.message}")
                 else:
                     typer.echo(f"error: {finding.message}")
+            typer.echo("attempted_transport: false")
             raise typer.Exit(code=2)
 
         prepared = result.prepared
         if prepared is None:
             typer.echo("result: error")
             typer.echo("error: prepared request metadata is missing")
+            typer.echo("attempted_transport: false")
             raise typer.Exit(code=2)
 
-        typer.echo("result: prepared")
+        execution = execute_model_ping(prepared)
+        if not execution.ok:
+            typer.echo("result: error")
+            typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+            typer.echo(f"backend_model: {prepared.backend_model_name}")
+            typer.echo(f"provider: {prepared.provider_key}")
+            typer.echo(f"endpoint: {execution.endpoint}")
+            typer.echo(f"timeout_seconds: {prepared.timeout_seconds}")
+            typer.echo(f"auth: {prepared.auth_mode}")
+            if prepared.auth_env_name:
+                typer.echo(f"auth_env: {prepared.auth_env_name}")
+            typer.echo(f"auth_present: {str(prepared.auth_present).lower()}")
+            typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
+            typer.echo(f"transport: {execution.transport}")
+            if execution.error_message:
+                typer.echo(f"error: {execution.error_message}")
+            raise typer.Exit(code=3)
+
+        typer.echo("result: ok")
         typer.echo(f"resolved_model: {prepared.resolved_model_key}")
         typer.echo(f"backend_model: {prepared.backend_model_name}")
         typer.echo(f"provider: {prepared.provider_key}")
-        typer.echo(f"endpoint: {prepared.provider_base_url}")
+        typer.echo(f"endpoint: {execution.endpoint}")
         typer.echo(f"timeout_seconds: {prepared.timeout_seconds}")
         typer.echo(f"auth: {prepared.auth_mode}")
         if prepared.auth_env_name:
             typer.echo(f"auth_env: {prepared.auth_env_name}")
         typer.echo(f"auth_present: {str(prepared.auth_present).lower()}")
-        typer.echo(f"attempted_transport: {str(result.attempted_transport).lower()}")
-        typer.echo("note: no network call was performed")
+        typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
+        typer.echo(f"transport: {execution.transport}")
         raise typer.Exit(code=0)
     except typer.Exit:
         raise

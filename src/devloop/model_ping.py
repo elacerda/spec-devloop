@@ -1,11 +1,15 @@
-"""Backend-only model ping preparation layer."""
+"""Backend model ping preparation and execution layer."""
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
 
 from devloop.model_config import run_model_config_check
 
@@ -99,6 +103,31 @@ class ModelPingResult:
     attempted_transport: bool
     findings: list[ModelPingFinding]
     prepared: ModelPingPreparedRequest | None
+
+
+@dataclass(frozen=True)
+class ModelPingExecutionResult:
+    """Result of a model ping transport execution attempt.
+
+    Parameters
+    ----------
+    ok
+        True when transport call succeeded and response shape was valid.
+    attempted_transport
+        True when a transport request was attempted.
+    endpoint
+        Final request endpoint used for transport execution.
+    transport
+        Transport status label (`ok` or `error`).
+    error_message
+        Sanitized error summary when transport fails.
+    """
+
+    ok: bool
+    attempted_transport: bool
+    endpoint: str
+    transport: str
+    error_message: str | None = None
 
 
 def run_model_ping(
@@ -266,6 +295,132 @@ def run_model_ping(
     )
     findings.append(ModelPingFinding(SEVERITY_INFO, "model ping request prepared"))
     return ModelPingResult(True, False, findings, prepared)
+
+
+def execute_model_ping(
+    prepared: ModelPingPreparedRequest,
+    environ: Mapping[str, str] | None = None,
+    transport: Any | None = None,
+) -> ModelPingExecutionResult:
+    """Execute an OpenAI-compatible model ping transport call.
+
+    Parameters
+    ----------
+    prepared
+        Sanitized request metadata produced by `run_model_ping`.
+    environ
+        Environment source for auth token resolution at execution time.
+    transport
+        Optional transport function for tests. It must accept
+        `(url, payload, headers, timeout_seconds)` and return
+        `(status_code, response_body_bytes)`.
+
+    Returns
+    -------
+    ModelPingExecutionResult
+        Transport execution outcome with sanitized status and endpoint metadata.
+    """
+
+    env_map = os.environ if environ is None else environ
+    endpoint = _build_chat_completions_endpoint(prepared.provider_base_url)
+    payload = {
+        "model": prepared.backend_model_name,
+        "messages": [{"role": "user", "content": "ping"}],
+        "max_tokens": 1,
+        "temperature": 0,
+    }
+    headers = {"Content-Type": "application/json"}
+
+    token = None
+    if prepared.auth_env_name:
+        token = env_map.get(prepared.auth_env_name)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    try:
+        executor = transport if transport is not None else _default_http_transport
+        status_code, response_body = executor(endpoint, payload, headers, prepared.timeout_seconds)
+        if status_code != 200:
+            return ModelPingExecutionResult(
+                ok=False,
+                attempted_transport=True,
+                endpoint=endpoint,
+                transport="error",
+                error_message=f"transport request failed with status {status_code}",
+            )
+
+        try:
+            response_json = json.loads(response_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return ModelPingExecutionResult(
+                ok=False,
+                attempted_transport=True,
+                endpoint=endpoint,
+                transport="error",
+                error_message="transport response is not valid JSON",
+            )
+
+        if not isinstance(response_json, dict) or "choices" not in response_json:
+            return ModelPingExecutionResult(
+                ok=False,
+                attempted_transport=True,
+                endpoint=endpoint,
+                transport="error",
+                error_message="transport response is missing required field: choices",
+            )
+
+        return ModelPingExecutionResult(
+            ok=True,
+            attempted_transport=True,
+            endpoint=endpoint,
+            transport="ok",
+            error_message=None,
+        )
+    except TimeoutError:
+        return ModelPingExecutionResult(
+            ok=False,
+            attempted_transport=True,
+            endpoint=endpoint,
+            transport="error",
+            error_message="transport request timed out",
+        )
+    except Exception:
+        return ModelPingExecutionResult(
+            ok=False,
+            attempted_transport=True,
+            endpoint=endpoint,
+            transport="error",
+            error_message="transport request failed due to runtime/network error",
+        )
+
+
+def _build_chat_completions_endpoint(base_url: str) -> str:
+    """Build the OpenAI-compatible chat completions endpoint from base URL.
+
+    Query strings and fragments are stripped before appending the endpoint path.
+    """
+    parsed = urllib_parse.urlsplit(base_url.strip())
+    clean_path = parsed.path.rstrip("/")
+    endpoint_path = f"{clean_path}/chat/completions"
+    sanitized = parsed._replace(path=endpoint_path, query="", fragment="")
+    return urllib_parse.urlunsplit(sanitized)
+
+
+def _default_http_transport(
+    url: str,
+    payload: dict[str, Any],
+    headers: dict[str, str],
+    timeout_seconds: int,
+) -> tuple[int, bytes]:
+    """Execute an HTTP POST to an OpenAI-compatible endpoint using urllib."""
+    body = json.dumps(payload).encode("utf-8")
+    request = urllib_request.Request(url=url, data=body, headers=headers, method="POST")
+    try:
+        with urllib_request.urlopen(request, timeout=timeout_seconds) as response:
+            status_code = int(response.getcode())
+            return status_code, response.read()
+    except urllib_error.HTTPError as exc:
+        return int(exc.code), b""
 
 
 def _resolve_target_to_model_key(

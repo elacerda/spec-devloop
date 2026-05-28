@@ -8,6 +8,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from devloop.cli import app
+from devloop.model_ping import ModelPingExecutionResult
 
 runner = CliRunner()
 
@@ -253,6 +254,7 @@ def test_model_ping_missing_config_returns_error_two(tmp_path: Path) -> None:
     assert "target: supervisor" in result.stdout
     assert "result: error" in result.stdout
     assert "model config file is required for ping" in result.stdout
+    assert "attempted_transport: false" in result.stdout
 
 
 def test_model_ping_allow_call_missing_returns_blocked_two(tmp_path: Path) -> None:
@@ -265,6 +267,7 @@ def test_model_ping_allow_call_missing_returns_blocked_two(tmp_path: Path) -> No
     assert result.exit_code == 2
     assert "result: blocked" in result.stdout
     assert "allow_call=True" in result.stdout
+    assert "attempted_transport: false" in result.stdout
 
 
 def test_model_ping_policy_false_returns_blocked_two(tmp_path: Path) -> None:
@@ -276,6 +279,7 @@ def test_model_ping_policy_false_returns_blocked_two(tmp_path: Path) -> None:
     assert result.exit_code == 2
     assert "result: blocked" in result.stdout
     assert "policy.model_calls_allowed" in result.stdout
+    assert "attempted_transport: false" in result.stdout
 
 
 def test_model_ping_unknown_target_returns_error_two(tmp_path: Path) -> None:
@@ -290,8 +294,8 @@ def test_model_ping_unknown_target_returns_error_two(tmp_path: Path) -> None:
     assert "unknown target: missing" in result.stdout
 
 
-def test_model_ping_success_returns_prepared_zero(tmp_path: Path) -> None:
-    """Ping succeeds with prepared output when policy and allow_call are enabled."""
+def test_model_ping_success_returns_ok_zero(tmp_path: Path, monkeypatch) -> None:
+    """Ping succeeds with transport output when policy and allow_call are enabled."""
     config = """schema_version: 1
 policy:
   model_calls_allowed: true
@@ -311,17 +315,31 @@ roles:
 """
     _write(tmp_path / ".ai-loop/config/models.yaml", config)
 
+    from devloop import cli as cli_module
+
+    def _exec_stub(_prepared, environ=None, transport=None):
+        return ModelPingExecutionResult(
+            ok=True,
+            attempted_transport=True,
+            endpoint="http://localhost:8000/v1/chat/completions",
+            transport="ok",
+            error_message=None,
+        )
+
+    monkeypatch.setattr(cli_module, "execute_model_ping", _exec_stub)
+
     result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
 
     assert result.exit_code == 0
-    assert "result: prepared" in result.stdout
+    assert "result: ok" in result.stdout
     assert "resolved_model: qwen3_local" in result.stdout
     assert "provider: local_vllm" in result.stdout
-    assert "attempted_transport: false" in result.stdout
-    assert "note: no network call was performed" in result.stdout
+    assert "attempted_transport: true" in result.stdout
+    assert "transport: ok" in result.stdout
+    assert "endpoint: http://localhost:8000/v1/chat/completions" in result.stdout
 
 
-def test_model_ping_auth_present_true_without_secret_exposure(tmp_path: Path) -> None:
+def test_model_ping_auth_present_true_without_secret_exposure(tmp_path: Path, monkeypatch) -> None:
     """Ping shows auth presence without printing secret values."""
     config = """schema_version: 1
 policy:
@@ -343,6 +361,19 @@ roles:
     _write(tmp_path / ".ai-loop/config/models.yaml", config)
 
     secret = "super-secret-token"
+    from devloop import cli as cli_module
+
+    def _exec_stub(_prepared, environ=None, transport=None):
+        return ModelPingExecutionResult(
+            ok=True,
+            attempted_transport=True,
+            endpoint="http://localhost:8000/v1/chat/completions",
+            transport="ok",
+            error_message=None,
+        )
+
+    monkeypatch.setattr(cli_module, "execute_model_ping", _exec_stub)
+
     result = _invoke_model_ping_in_cwd(
         tmp_path,
         ["supervisor", "--allow-call"],
@@ -369,7 +400,7 @@ def test_model_ping_does_not_pass_transport_argument(tmp_path: Path, monkeypatch
     """CLI should call backend without passing transport argument."""
     captured: dict[str, object] = {}
 
-    from devloop.model_ping import ModelPingFinding, ModelPingPreparedRequest, ModelPingResult
+    from devloop.model_ping import ModelPingExecutionResult, ModelPingFinding, ModelPingPreparedRequest, ModelPingResult
 
     def _stub(project_root: Path, target: str, allow_call: bool, environ=None, transport=None):
         captured["project_root"] = project_root
@@ -400,9 +431,63 @@ def test_model_ping_does_not_pass_transport_argument(tmp_path: Path, monkeypatch
 
     monkeypatch.setattr(cli_module, "run_model_ping", _stub)
 
+    def _exec_stub(_prepared, environ=None, transport=None):
+        return ModelPingExecutionResult(
+            ok=True,
+            attempted_transport=True,
+            endpoint="http://localhost:8000/v1/chat/completions",
+            transport="ok",
+            error_message=None,
+        )
+
+    monkeypatch.setattr(cli_module, "execute_model_ping", _exec_stub)
+
     result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
 
     assert result.exit_code == 0
     assert captured["target"] == "supervisor"
     assert captured["allow_call"] is True
     assert captured["transport"] is None
+
+
+def test_model_ping_runtime_failure_returns_three(tmp_path: Path, monkeypatch) -> None:
+    """Ping returns exit code 3 when transport execution fails."""
+    config = """schema_version: 1
+policy:
+  model_calls_allowed: true
+providers:
+  local_vllm:
+    type: openai_compatible
+    base_url: http://localhost:8000/v1
+    timeout_seconds: 30
+    api_key:
+      mode: none
+models:
+  qwen3_local:
+    provider: local_vllm
+roles:
+  supervisor:
+    model: qwen3_local
+"""
+    _write(tmp_path / ".ai-loop/config/models.yaml", config)
+
+    from devloop import cli as cli_module
+
+    def _exec_stub(_prepared, environ=None, transport=None):
+        return ModelPingExecutionResult(
+            ok=False,
+            attempted_transport=True,
+            endpoint="http://localhost:8000/v1/chat/completions",
+            transport="error",
+            error_message="transport request timed out",
+        )
+
+    monkeypatch.setattr(cli_module, "execute_model_ping", _exec_stub)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 3
+    assert "result: error" in result.stdout
+    assert "attempted_transport: true" in result.stdout
+    assert "transport: error" in result.stdout
+    assert "transport request timed out" in result.stdout
