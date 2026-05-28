@@ -7,6 +7,7 @@ from pathlib import Path
 import typer
 
 from devloop.cycle_check import run_cycle_check
+from devloop.cycle_advise import run_cycle_advise
 from devloop.cycle_complete import run_cycle_complete
 from devloop.cycle_list import list_cycles
 from devloop.cycle_new import run_cycle_new
@@ -351,6 +352,64 @@ def cycle_summary(cycle_id: str) -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected cycle summary failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@cycle_app.command("advise")
+def cycle_advise(
+    cycle_id: str,
+    role: str = typer.Option("supervisor", "--role", help="Role from models config for advisory preparation."),
+    allow_call: bool = typer.Option(
+        False,
+        "--allow-call",
+        help="Explicit runtime authorization to prepare model-backed advisory calls.",
+    ),
+) -> None:
+    """Prepare a model-backed cycle advisory request without transport execution."""
+
+    project_root = Path.cwd()
+    try:
+        result = run_cycle_advise(project_root, cycle_id=cycle_id, role=role, allow_call=allow_call)
+        typer.echo(f"cycle_id: {cycle_id}")
+        typer.echo(f"role: {role}")
+
+        if not result.ok:
+            finding_codes = {item.code for item in result.findings if item.code is not None}
+            blocked_codes = {"policy_blocked", "allow_call_missing"}
+            result_label = "blocked" if finding_codes & blocked_codes else "error"
+            typer.echo(f"result: {result_label}")
+            for finding in result.findings:
+                if finding.location:
+                    typer.echo(f"error: {finding.location}: {finding.message}")
+                else:
+                    typer.echo(f"error: {finding.message}")
+            typer.echo("attempted_transport: false")
+            raise typer.Exit(code=2)
+
+        prepared = result.prepared
+        if prepared is None:
+            typer.echo("result: error")
+            typer.echo("error: prepared request metadata is missing")
+            typer.echo("attempted_transport: false")
+            raise typer.Exit(code=2)
+
+        typer.echo("result: prepared")
+        typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+        typer.echo(f"backend_model: {prepared.backend_model_name}")
+        typer.echo(f"provider: {prepared.provider_key}")
+        typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
+        if prepared.input_artifacts:
+            typer.echo("inputs:")
+            for artifact in prepared.input_artifacts:
+                typer.echo(f"  - {artifact}")
+        typer.echo("attempted_transport: false")
+        typer.echo("transport: skipped")
+        typer.echo("safety: no files modified")
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected cycle advise failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
