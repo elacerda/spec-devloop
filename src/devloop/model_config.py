@@ -338,7 +338,10 @@ def _validate_providers(
                         severity=SEVERITY_ERROR,
                         message=(
                             "required api key environment variable is not set: "
-                            f"{env_name}"
+                            f"{env_name}; it must be exported in the shell and present in "
+                            "the process environment before running devloop; .env is not "
+                            "automatically loaded (load manually with: "
+                            "set -a; source .env; set +a)"
                         ),
                         location=f"{base_location}.api_key.env",
                     )

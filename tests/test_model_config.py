@@ -394,7 +394,19 @@ providers:
     result = run_model_config_check(tmp_path, environ={})
 
     errors = _find_messages(result, SEVERITY_ERROR)
-    assert any("environment variable is not set" in message for message in errors)
+    matching = [
+        message for message in errors if "environment variable is not set" in message
+    ]
+    assert matching
+    assert any("OPENAI_API_KEY" in message for message in matching)
+    assert any(
+        "process environment" in message or "export it in the shell" in message
+        for message in matching
+    )
+    assert any(
+        "set -a; source .env; set +a" in message or ".env is not automatically loaded" in message
+        for message in matching
+    )
 
 
 def test_required_api_key_env_set_is_valid(tmp_path: Path) -> None:
