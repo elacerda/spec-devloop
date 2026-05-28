@@ -503,3 +503,43 @@ git status --short
 
 The advisory should not recommend external tools unless they appear in the
 provided artifacts or project documentation.
+
+## Persisted advisory validation checklist
+
+Use this checklist when validating `cycle advise --write-report` manually.
+
+Expected success path:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report
+
+Expected result:
+
+- exit code `0`;
+- `attempted_transport: true`;
+- `transport: ok`;
+- `report_written: true`;
+- `report_path: .ai-loop/cycles/<cycle-id>/advisory.md`;
+- only `.ai-loop/cycles/<cycle-id>/advisory.md` is created or modified.
+
+Expected existing-report path:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report
+
+when `.ai-loop/cycles/<cycle-id>/advisory.md` already exists.
+
+Expected result:
+
+- exit code `2`;
+- the existing report is not overwritten;
+- model transport is not attempted;
+- no additional files are modified.
+
+Recommended validation commands:
+
+    devloop model check
+    devloop cycle check <cycle-id>
+    devloop cycle advise <cycle-id> --role supervisor --allow-call
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report
+    python3 -m pytest -q
+    git diff --check
+    git status --short

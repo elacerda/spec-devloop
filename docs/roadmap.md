@@ -188,3 +188,29 @@ Longer-term capabilities:
 5. **Stay agnostic**: no hard dependency on one model, provider, or agent.
 6. **Keep state local and inspectable**: prefer file-based contracts.
 7. **Make autonomy configurable**: support micro, balanced, yolo, and deep profiles.
+
+## H3 — Post-write-report documentation status
+
+Status: implemented.
+
+The `devloop cycle advise` command now supports optional advisory persistence through:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report
+
+Implemented behavior:
+
+- without `--write-report`, the command remains stdout-only and does not mutate files;
+- with `--write-report`, the command writes only `.ai-loop/cycles/<cycle-id>/advisory.md`;
+- existing `advisory.md` files are not overwritten;
+- the existing-report case fails before model transport, avoiding unnecessary calls;
+- persisted reports contain sanitized metadata and advisory text;
+- raw prompts, raw payloads, raw response JSON, headers, authorization values, API keys, environment values, and hidden chain-of-thought are not persisted.
+
+Current deliberate limitations:
+
+- no `--overwrite-report` flag;
+- no timestamped advisory history;
+- no autonomous shell execution;
+- no external agent execution;
+- no automatic `.env` loading;
+- no raw transport persistence.
