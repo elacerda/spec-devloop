@@ -68,6 +68,19 @@ def test_cycle_advise_executes_successfully_with_fake_transport(tmp_path: Path) 
         assert len(payload["messages"]) == 2
         assert payload["messages"][0]["role"] == "system"
         assert payload["messages"][1]["role"] == "user"
+        system_content = payload["messages"][0]["content"]
+        user_content = payload["messages"][1]["content"]
+        assert "spec-devloop" in system_content
+        assert "canonical project state directory is `.ai-loop`" in system_content
+        assert "Do not invent missing files" in system_content
+        assert "Recommended next microtask" in system_content
+        assert "allowlisted cycle artifacts" in system_content
+        assert "python3 -m pytest -q" in system_content
+        assert "do not recommend external tools" in system_content
+        assert "canonical_project_state: .ai-loop" in user_content
+        assert "allowed_cycle_artifacts: meta.yaml; task.md; plan.md; prompt.md; summary.md; report.md" in user_content
+        assert "validation_command_guidance:" in user_content
+        assert "grounding: use only the artifacts listed below" in user_content
         assert headers["Content-Type"] == "application/json"
         assert "Authorization" not in headers
         assert timeout_seconds == 15
