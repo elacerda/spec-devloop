@@ -365,7 +365,7 @@ def cycle_advise(
         help="Explicit runtime authorization to prepare model-backed advisory calls.",
     ),
 ) -> None:
-    """Prepare a model-backed cycle advisory request without transport execution."""
+    """Execute an explicitly authorized model-backed cycle advisory request."""
 
     project_root = Path.cwd()
     try:
@@ -373,7 +373,7 @@ def cycle_advise(
         typer.echo(f"cycle_id: {cycle_id}")
         typer.echo(f"role: {role}")
 
-        if not result.ok:
+        if not result.ok and result.attempted_transport is False:
             finding_codes = {item.code for item in result.findings if item.code is not None}
             blocked_codes = {"policy_blocked", "allow_call_missing"}
             result_label = "blocked" if finding_codes & blocked_codes else "error"
@@ -393,18 +393,35 @@ def cycle_advise(
             typer.echo("attempted_transport: false")
             raise typer.Exit(code=2)
 
-        typer.echo("result: prepared")
+        execution = result.execution
+        if execution is None:
+            typer.echo("result: error")
+            typer.echo("error: execution result is missing")
+            typer.echo("attempted_transport: false")
+            raise typer.Exit(code=2)
+
+        if not result.ok:
+            typer.echo("result: error")
+            typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+            typer.echo(f"backend_model: {prepared.backend_model_name}")
+            typer.echo(f"provider: {prepared.provider_key}")
+            typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
+            typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
+            typer.echo(f"transport: {execution.transport}")
+            if execution.error_message:
+                typer.echo(f"error: {execution.error_message}")
+            raise typer.Exit(code=3)
+
+        typer.echo("result: ok")
         typer.echo(f"resolved_model: {prepared.resolved_model_key}")
         typer.echo(f"backend_model: {prepared.backend_model_name}")
         typer.echo(f"provider: {prepared.provider_key}")
         typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
-        if prepared.input_artifacts:
-            typer.echo("inputs:")
-            for artifact in prepared.input_artifacts:
-                typer.echo(f"  - {artifact}")
-        typer.echo("attempted_transport: false")
-        typer.echo("transport: skipped")
+        typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
+        typer.echo(f"transport: {execution.transport}")
         typer.echo("safety: no files modified")
+        typer.echo("advisory:")
+        typer.echo(execution.advisory_text or "")
         raise typer.Exit(code=0)
     except typer.Exit:
         raise

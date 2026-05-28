@@ -61,24 +61,32 @@ def _make_cycle(tmp_path: Path, cycle_id: str = "c-001") -> None:
     _write(cycle_dir / "report.md", "report\n")
 
 
-def test_cycle_advise_success_output_prepared(tmp_path: Path) -> None:
+def test_cycle_advise_success_output_prepared(tmp_path: Path, monkeypatch) -> None:
     _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
     _write(tmp_path / ".ai-loop/project.md", "project\n")
     _make_cycle(tmp_path, "c-001")
     _write(tmp_path / ".ai-loop/cycles/c-001/summary.md", "summary\n")
+    from devloop import cycle_advise as advise_module
+
+    def _fake_transport(_url, _payload, _headers, _timeout):
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"- Focus the next validation step."}}]}'
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
 
     result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call"])
 
     assert result.exit_code == 0
     assert "cycle_id: c-001" in result.stdout
     assert "role: supervisor" in result.stdout
-    assert "result: prepared" in result.stdout
+    assert "result: ok" in result.stdout
     assert "resolved_model: qwen3_local" in result.stdout
     assert "backend_model: qwen3_local_backend" in result.stdout
     assert "provider: local_vllm" in result.stdout
-    assert "attempted_transport: false" in result.stdout
-    assert "transport: skipped" in result.stdout
+    assert "attempted_transport: true" in result.stdout
+    assert "transport: ok" in result.stdout
     assert "safety: no files modified" in result.stdout
+    assert "advisory:" in result.stdout
+    assert "- Focus the next validation step." in result.stdout
 
 
 def test_cycle_advise_missing_allow_call_returns_blocked(tmp_path: Path) -> None:
@@ -132,8 +140,54 @@ def test_cycle_advise_does_not_print_secret_values(tmp_path: Path, monkeypatch) 
     _make_cycle(tmp_path, "c-001")
     secret = "very-secret-value"
     monkeypatch.setenv("OPENAI_API_KEY", secret)
+    from devloop import cycle_advise as advise_module
+
+    def _fake_transport(_url, _payload, _headers, _timeout):
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"safe advisory"}}]}'
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
 
     result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call"])
 
     assert result.exit_code == 0
     assert secret not in result.stdout
+    assert "Authorization" not in result.stdout
+    assert '"messages"' not in result.stdout
+    assert '"model"' not in result.stdout
+
+
+def test_cycle_advise_transport_runtime_failure_returns_three(tmp_path: Path, monkeypatch) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    from devloop import cycle_advise as advise_module
+
+    def _fake_transport(*_args):
+        raise TimeoutError("super-secret")
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
+    result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call"])
+
+    assert result.exit_code == 3
+    assert "result: error" in result.stdout
+    assert "attempted_transport: true" in result.stdout
+    assert "transport: error" in result.stdout
+    assert "transport request timed out" in result.stdout
+    assert "super-secret" not in result.stdout
+
+
+def test_cycle_advise_invalid_model_response_returns_three(tmp_path: Path, monkeypatch) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    from devloop import cycle_advise as advise_module
+
+    def _fake_transport(_url, _payload, _headers, _timeout):
+        return 200, b'{"choices":[{"message":{"role":"assistant"}}]}'
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
+    result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call"])
+
+    assert result.exit_code == 3
+    assert "result: error" in result.stdout
+    assert "attempted_transport: true" in result.stdout
+    assert "transport: error" in result.stdout
+    assert "assistant content" in result.stdout
