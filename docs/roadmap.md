@@ -214,3 +214,24 @@ Current deliberate limitations:
 - no external agent execution;
 - no automatic `.env` loading;
 - no raw transport persistence.
+
+## H5 — Supervisor prompt advisory persistence semantics
+
+Status: implemented and manually validated.
+
+The supervisor advisory prompt now explicitly distinguishes the normal cycle artifact
+`report.md` from the persisted model advisory file `advisory.md`.
+
+Clarified contract:
+
+- `devloop cycle advise <cycle-id> --role supervisor --allow-call` remains advisory-only and stdout-only by default;
+- `devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report` writes only `.ai-loop/cycles/<cycle-id>/advisory.md`;
+- `--write-report` does not write or update `report.md`;
+- `cycle advise` does not generate or update `plan.md`, `prompt.md`, `summary.md`, or `report.md`;
+- `plan.md`, `prompt.md`, and `summary.md` are optional context artifacts;
+- missing optional artifacts alone should not imply low readiness;
+- for transport/configuration or advisory-persistence validation cycles, a minimal artifact set such as `meta.yaml`, `task.md`, and `report.md` may be sufficient.
+
+Manual validation after H5 confirmed that the model advisory no longer confused
+`report.md` with `advisory.md`, and did not classify a minimal validation cycle
+as low readiness only because optional artifacts were absent.

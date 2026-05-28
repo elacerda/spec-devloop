@@ -543,3 +543,56 @@ Recommended validation commands:
     python3 -m pytest -q
     git diff --check
     git status --short
+
+## Advisory persistence semantics in the supervisor prompt
+
+The supervisor prompt must keep two artifact concepts separate:
+
+- `report.md` is a normal cycle artifact.
+- `advisory.md` is the persisted model advisory created only when `cycle advise`
+  is run with `--write-report`.
+
+The current persistence contract is:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report
+
+writes only:
+
+    .ai-loop/cycles/<cycle-id>/advisory.md
+
+It does not write or update:
+
+- `report.md`;
+- `plan.md`;
+- `prompt.md`;
+- `summary.md`;
+- `task.md`;
+- `meta.yaml`;
+- model config files;
+- raw prompt/payload/response logs.
+
+The supervisor may mention optional artifacts when useful, but must not treat
+`plan.md`, `prompt.md`, or `summary.md` as mandatory for every cycle. Their
+absence may indicate minimal context, but should not automatically imply low
+readiness.
+
+For cycles whose goal is validating model transport, configuration, or advisory
+persistence, the minimal cycle artifact set can be enough:
+
+    meta.yaml
+    task.md
+    report.md
+
+Manual validation checklist for this prompt behavior:
+
+    devloop model check
+    devloop cycle check <cycle-id>
+    devloop cycle advise <cycle-id> --role supervisor --allow-call
+
+Expected advisory behavior:
+
+- it may reference `report.md` as a normal cycle artifact;
+- it must not say that `--write-report` writes to `report.md`;
+- it should identify `advisory.md` as the persisted advisory target;
+- it should not claim that `cycle advise` generates or updates optional cycle artifacts;
+- it should not classify readiness as low only because `plan.md`, `prompt.md`, or `summary.md` are absent.
