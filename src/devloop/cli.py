@@ -363,6 +363,74 @@ def model_check() -> None:
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 
+@model_app.command("list")
+def model_list() -> None:
+    """List providers, models, roles, and aliases from `.ai-loop/config/models.yaml`."""
+    project_root = Path.cwd()
+    try:
+        result = run_model_config_check(project_root)
+
+        # If file is absent, exit with 0 and print compact message
+        if not result.file_present:
+            typer.echo("no model config present")
+            raise typer.Exit(code=0)
+
+        # If there are validation errors, exit with 2 and suggest running check
+        has_errors = any(
+            finding.severity == "error" for finding in result.findings
+        )
+        if has_errors:
+            typer.echo("model config has errors; run `devloop model check` for details")
+            raise typer.Exit(code=2)
+
+        # Print compact listing
+        doc = result.document
+
+        # Providers
+        providers = doc.get("providers", {})
+        if providers:
+            typer.echo("providers:")
+            for name in providers.keys():
+                typer.echo(f"  - {name}")
+        else:
+            typer.echo("providers: (none)")
+
+        # Models
+        models = doc.get("models", {})
+        if models:
+            typer.echo("models:")
+            for name in models.keys():
+                typer.echo(f"  - {name}")
+        else:
+            typer.echo("models: (none)")
+
+        # Roles
+        roles = doc.get("roles", {})
+        if roles:
+            typer.echo("roles:")
+            for name, role_data in roles.items():
+                if isinstance(role_data, dict):
+                    model_name = role_data.get("model")
+                    same_as = role_data.get("same_as")
+                    if model_name:
+                        typer.echo(f"  - {name} -> {model_name}")
+                    elif same_as:
+                        typer.echo(f"  - {name} (alias of {same_as})")
+                    else:
+                        typer.echo(f"  - {name}")
+                else:
+                    typer.echo(f"  - {name}")
+        else:
+            typer.echo("roles: (none)")
+
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected model list failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
 app.add_typer(cycle_app, name="cycle")
 app.add_typer(model_app, name="model")
 
