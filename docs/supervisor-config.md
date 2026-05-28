@@ -1,22 +1,21 @@
 # Supervisor Configuration
 
-This document describes the future configuration surface for the supervisor/orchestrator.
+This document describes the model configuration contract for the supervisor/orchestrator.
 
 The supervisor is the AI role responsible for planning, selecting the next task, generating worker instructions, reviewing evidence, and deciding whether the loop should correct or advance.
 
 ## Status
 
-This configuration is future-facing.
-
-MVP-0 does not require it and does not call models.
+The `.ai-loop/config/models.yaml` file is now integrated into MVP-0 as an **optional** declarative contract for model configuration. It is validated by `devloop doctor` and `devloop status` but is not required for project readiness.
 
 ### Current implementation status
 
-The `.ai-loop/config/models.yaml` file is now integrated into MVP-0 as an **optional** declarative contract for model configuration. It is validated by `devloop doctor` and `devloop status` but is not required for project readiness.
-
 - **Optional file**: Missing `models.yaml` is not a readiness failure.
 - **Validation**: Invalid config is reported as an error.
-- **No network calls**: All validation is local and read-only.
+- **No network calls for check/list**: `devloop model check` and `devloop model list` are local and read-only.
+- **Network call for ping**: `devloop model ping <target> --allow-call` performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized (requires dual authorization: `policy.model_calls_allowed: true` + `--allow-call` flag).
+
+For safety constraints and sanitized output, see the [Model ping](#devloop-model-ping) section below.
 
 ## Design goals
 
@@ -74,9 +73,7 @@ preferences:
   default_profile: micro
 ```
 
-This is illustrative, not an implemented schema.
-
-This document does not assume model calls are enabled in MVP-0 or MVP-1.
+This is illustrative of the expected schema structure. The model configuration contract is implemented and validated by `devloop model check`.
 
 ## Roles
 
@@ -175,7 +172,7 @@ Possible future commands:
 
 These commands do not exist in MVP-0 unless implemented separately.
 
-`devloop model ping` is explicitly out of the first implementation phase.
+`devloop model ping` is implemented in the model configuration layer (MVP-2).
 
 `providers.yaml` is already documented for MVP-0 doctor validation. The future
 `models.yaml` contract is the richer model-role-preference configuration layer.

@@ -64,17 +64,22 @@ This moves beyond the report-only nature of MVP-0 by enabling actual project ini
 
 Goal: define a stable model/provider/role/preference contract before any direct model invocation.
 
-Possible features:
+**Status: COMPLETED**
+
+Implemented features:
 
 - `.ai-loop/config/models.yaml` as the richer model configuration contract;
 - support for local OpenAI-compatible endpoints (for example, local vLLM);
 - explicit API key modes: `none`, `optional`, `required`;
-- role mapping and fallback ordering;
-- policy defaults with `model_calls_allowed: false`.
+- role mapping and role aliases;
+- policy defaults with `model_calls_allowed: false`;
+- `devloop model check`: validates configuration (local, read-only, no network calls);
+- `devloop model list`: lists providers, models, roles, and aliases (local, read-only, no network calls);
+- `devloop model ping <target> --allow-call`: performs a real OpenAI-compatible `/chat/completions` ping when explicitly authorized (requires dual authorization: `policy.model_calls_allowed: true` + `--allow-call` flag).
 
-This phase remains configuration-only and does not include network calls.
+This phase includes the model configuration contract and the optional network call for ping validation.
 
-`devloop model ping` is explicitly out of this first implementation phase.
+For details, see [Supervisor Config](supervisor-config.md).
 
 ## MVP-3: Supervisor model calls
 
