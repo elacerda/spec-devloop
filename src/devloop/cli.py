@@ -364,14 +364,40 @@ def cycle_advise(
         "--allow-call",
         help="Explicit runtime authorization to prepare model-backed advisory calls.",
     ),
+    write_report: bool = typer.Option(
+        False,
+        "--write-report",
+        help="Persist advisory output to .ai-loop/cycles/<cycle-id>/advisory.md.",
+    ),
 ) -> None:
     """Execute an explicitly authorized model-backed cycle advisory request."""
 
     project_root = Path.cwd()
     try:
-        result = run_cycle_advise(project_root, cycle_id=cycle_id, role=role, allow_call=allow_call)
+        result = run_cycle_advise(
+            project_root,
+            cycle_id=cycle_id,
+            role=role,
+            allow_call=allow_call,
+            write_report=write_report,
+        )
         typer.echo(f"cycle_id: {cycle_id}")
         typer.echo(f"role: {role}")
+
+        if result.error_code == "report_exists" and result.prepared is not None:
+            prepared = result.prepared
+            typer.echo("result: error")
+            typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+            typer.echo(f"backend_model: {prepared.backend_model_name}")
+            typer.echo(f"provider: {prepared.provider_key}")
+            typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
+            typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
+            if result.report_path:
+                typer.echo(f"report_path: {result.report_path}")
+            if result.error_message:
+                typer.echo(f"error: {result.error_message}")
+            raise typer.Exit(code=2)
 
         if not result.ok and result.attempted_transport is False:
             finding_codes = {item.code for item in result.findings if item.code is not None}
@@ -384,6 +410,7 @@ def cycle_advise(
                 else:
                     typer.echo(f"error: {finding.message}")
             typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
             raise typer.Exit(code=2)
 
         prepared = result.prepared
@@ -391,13 +418,43 @@ def cycle_advise(
             typer.echo("result: error")
             typer.echo("error: prepared request metadata is missing")
             typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
+            raise typer.Exit(code=2)
+
+        if result.error_code == "report_exists":
+            typer.echo("result: error")
+            typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+            typer.echo(f"backend_model: {prepared.backend_model_name}")
+            typer.echo(f"provider: {prepared.provider_key}")
+            typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
+            typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
+            if result.report_path:
+                typer.echo(f"report_path: {result.report_path}")
+            if result.error_message:
+                typer.echo(f"error: {result.error_message}")
             raise typer.Exit(code=2)
 
         execution = result.execution
+        if result.error_code == "report_exists":
+            typer.echo("result: error")
+            typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+            typer.echo(f"backend_model: {prepared.backend_model_name}")
+            typer.echo(f"provider: {prepared.provider_key}")
+            typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
+            typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
+            if result.report_path:
+                typer.echo(f"report_path: {result.report_path}")
+            if result.error_message:
+                typer.echo(f"error: {result.error_message}")
+            raise typer.Exit(code=2)
+
         if execution is None:
             typer.echo("result: error")
             typer.echo("error: execution result is missing")
             typer.echo("attempted_transport: false")
+            typer.echo("report_written: false")
             raise typer.Exit(code=2)
 
         if not result.ok:
@@ -408,8 +465,15 @@ def cycle_advise(
             typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
             typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
             typer.echo(f"transport: {execution.transport}")
+            typer.echo("report_written: false")
+            if result.error_code == "report_exists":
+                if result.error_message:
+                    typer.echo(f"error: {result.error_message}")
+                raise typer.Exit(code=2)
             if execution.error_message:
                 typer.echo(f"error: {execution.error_message}")
+            if result.error_message:
+                typer.echo(f"error: {result.error_message}")
             raise typer.Exit(code=3)
 
         typer.echo("result: ok")
@@ -419,7 +483,12 @@ def cycle_advise(
         typer.echo(f"inputs_count: {len(prepared.input_artifacts)}")
         typer.echo(f"attempted_transport: {str(execution.attempted_transport).lower()}")
         typer.echo(f"transport: {execution.transport}")
-        typer.echo("safety: no files modified")
+        typer.echo(f"report_written: {str(result.report_written).lower()}")
+        if result.report_path:
+            typer.echo(f"report_path: {result.report_path}")
+            typer.echo("safety: no files modified except explicit advisory report write")
+        else:
+            typer.echo("safety: no files modified")
         typer.echo("advisory:")
         typer.echo(execution.advisory_text or "")
         raise typer.Exit(code=0)

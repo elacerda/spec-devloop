@@ -400,9 +400,9 @@ safety: no files modified
 
 **Future work:**
 
-- Real model-backed advisory transport is not implemented yet.
+- Real model-backed advisory transport is implemented for explicitly authorized `cycle advise` calls.
 - Autonomous execution remains out of scope.
-- Persistence such as `--write-report` remains future work and requires a separate contract/ADR.
+- Optional explicit persistence is available via `--write-report`, which writes only `.ai-loop/cycles/<cycle-id>/advisory.md` on successful advisory generation and refuses overwrite.
 
 
 ### Cycle advisory transport

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -176,6 +177,14 @@ class CycleAdviseResult:
         Sanitized prepared request metadata on preparation success.
     execution
         Execution result when transport was attempted.
+    report_written
+        True when `--write-report` was requested and advisory persistence succeeded.
+    report_path
+        Relative advisory report path when written.
+    error_code
+        Stable sanitized runtime/precondition error code for report persistence.
+    error_message
+        Human-readable sanitized runtime/precondition error for report persistence.
     """
 
     ok: bool
@@ -183,6 +192,10 @@ class CycleAdviseResult:
     findings: list[CycleAdviseFinding]
     prepared: CycleAdvisePreparedRequest | None
     execution: CycleAdviseExecutionResult | None
+    report_written: bool = False
+    report_path: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
 
 
 def run_cycle_advise(
@@ -190,6 +203,7 @@ def run_cycle_advise(
     cycle_id: str,
     role: str = "supervisor",
     allow_call: bool = False,
+    write_report: bool = False,
     environ: Mapping[str, str] | None = None,
     transport: CycleAdviseTransport | None = None,
 ) -> CycleAdviseResult:
@@ -205,6 +219,9 @@ def run_cycle_advise(
         Role name to resolve in model config. Defaults to `supervisor`.
     allow_call
         Explicit runtime authorization gate. Must be `True`.
+    write_report
+        When True, persist advisory output to
+        `.ai-loop/cycles/<cycle-id>/advisory.md` after successful extraction.
     environ
         Environment map used by config validation and auth token resolution.
         Defaults to `os.environ`.
@@ -221,7 +238,8 @@ def run_cycle_advise(
     Notes
     -----
     This function is advisory-only and does not perform file mutation, shell
-    execution, agent execution, or persistence of prompt/response payloads.
+    execution, or agent execution. It only writes a file when `write_report=True`
+    and all advisory gates succeed.
     """
 
     env_map = os.environ if environ is None else environ
@@ -238,7 +256,7 @@ def run_cycle_advise(
                 code="config_missing",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     if config_errors:
         findings.append(
@@ -257,7 +275,7 @@ def run_cycle_advise(
                     code="config_detail",
                 )
             )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     doc = config.document
     policy = doc.get("policy")
@@ -271,7 +289,7 @@ def run_cycle_advise(
                 code="policy_blocked",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
     if allow_call is not True:
         findings.append(
             CycleAdviseFinding(
@@ -280,13 +298,13 @@ def run_cycle_advise(
                 code="allow_call_missing",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     cycle_check = run_cycle_check(project_root, cycle_id)
     if cycle_check.errors:
         for error in cycle_check.errors:
             findings.append(CycleAdviseFinding(severity=SEVERITY_ERROR, message=error, code="cycle_invalid"))
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     roles = doc.get("roles", {})
     models = doc.get("models", {})
@@ -301,7 +319,7 @@ def run_cycle_advise(
         severity_error=SEVERITY_ERROR,
     )
     if resolved_model_key is None:
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     model_data = models.get(resolved_model_key) if isinstance(models, dict) else None
     if not isinstance(model_data, dict):
@@ -313,7 +331,7 @@ def run_cycle_advise(
                 code="model_unknown",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     provider_key = model_data.get("provider")
     provider_data = providers.get(provider_key) if isinstance(provider_key, str) and isinstance(providers, dict) else None
@@ -326,7 +344,7 @@ def run_cycle_advise(
                 code="provider_missing",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     provider_type = provider_data.get("type")
     if provider_type != SUPPORTED_PROVIDER_TYPE:
@@ -338,7 +356,7 @@ def run_cycle_advise(
                 code="provider_unsupported",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     base_url = provider_data.get("base_url")
     if not isinstance(base_url, str) or not base_url.strip():
@@ -350,7 +368,7 @@ def run_cycle_advise(
                 code="provider_base_url_missing",
             )
         )
-        return CycleAdviseResult(False, False, findings, None, None)
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False)
 
     auth_mode, auth_env_name, auth_present = _resolve_auth(provider_key, provider_data, env_map, findings)
     if auth_mode is None:
@@ -383,12 +401,123 @@ def run_cycle_advise(
         advisory_context=advisory_context,
     )
 
+    if write_report:
+        report_rel_path = _advisory_report_relative_path(prepared.cycle_id)
+        if (project_root / report_rel_path).exists():
+            return CycleAdviseResult(
+                False,
+                False,
+                findings,
+                prepared,
+                None,
+                report_written=False,
+                report_path=report_rel_path,
+                error_code="report_exists",
+                error_message="advisory report already exists; refusing to overwrite",
+            )
+
     execution = execute_cycle_advise(prepared, environ=env_map, transport=transport)
     if not execution.ok:
-        return CycleAdviseResult(False, True, findings, prepared, execution)
+        return CycleAdviseResult(False, True, findings, prepared, execution, report_written=False)
 
     findings.append(CycleAdviseFinding(severity=SEVERITY_INFO, message="cycle advise advisory received"))
-    return CycleAdviseResult(True, True, findings, prepared, execution)
+    if not write_report:
+        return CycleAdviseResult(True, True, findings, prepared, execution, report_written=False)
+
+    report_write = _write_advisory_report(project_root, prepared, execution)
+    if report_write["ok"] is not True:
+        return CycleAdviseResult(
+            False,
+            True,
+            findings,
+            prepared,
+            execution,
+            report_written=False,
+            error_code=report_write["error_code"],
+            error_message=report_write["error_message"],
+        )
+
+    return CycleAdviseResult(
+        True,
+        True,
+        findings,
+        prepared,
+        execution,
+        report_written=True,
+        report_path=report_write["report_path"],
+    )
+
+
+
+def _advisory_report_relative_path(cycle_id: str) -> str:
+    """Return the deterministic cycle-local advisory report path."""
+
+    return f".ai-loop/cycles/{cycle_id}/advisory.md"
+
+def _write_advisory_report(
+    project_root: Path,
+    prepared: CycleAdvisePreparedRequest,
+    execution: CycleAdviseExecutionResult,
+) -> dict[str, str | bool]:
+    """Write the sanitized advisory report to the cycle-local advisory file.
+
+    Parameters
+    ----------
+    project_root
+        Project root containing `.ai-loop`.
+    prepared
+        Sanitized prepared request metadata.
+    execution
+        Successful execution result containing advisory text.
+
+    Returns
+    -------
+    dict[str, str | bool]
+        A compact dict with `ok`, `report_path` on success, or sanitized
+        `error_code` and `error_message` on failure.
+    """
+
+    report_rel_path = _advisory_report_relative_path(prepared.cycle_id)
+    report_path = project_root / report_rel_path
+    if report_path.exists():
+        return {
+            "ok": False,
+            "error_code": "report_exists",
+            "error_message": "advisory report already exists; refusing to overwrite",
+        }
+
+    advisory_text = execution.advisory_text or ""
+    timestamp_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    lines = [
+        "# Cycle Advisory Report",
+        "",
+        "## Metadata",
+        f"- cycle id: {prepared.cycle_id}",
+        f"- requested role: {prepared.role}",
+        f"- resolved model key: {prepared.resolved_model_key}",
+        f"- backend model name: {prepared.backend_model_name}",
+        f"- provider key: {prepared.provider_key}",
+        f"- transport status: {execution.transport}",
+        f"- generated_at_utc: {timestamp_utc}",
+        "- safety: no files were modified except the explicit report write",
+        "- input artifacts:",
+    ]
+    for rel_path in prepared.input_artifacts:
+        lines.append(f"  - {rel_path}")
+    if not prepared.input_artifacts:
+        lines.append("  - (none)")
+    lines.extend(["", "## Advisory", "", advisory_text, ""])
+
+    try:
+        report_path.write_text("\n".join(lines), encoding="utf-8")
+    except OSError:
+        return {
+            "ok": False,
+            "error_code": "report_write_failed",
+            "error_message": "unable to write advisory report due to filesystem error",
+        }
+
+    return {"ok": True, "report_path": report_rel_path}
 
 
 def execute_cycle_advise(

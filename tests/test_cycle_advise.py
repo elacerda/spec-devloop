@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from devloop.cycle_advise import SEVERITY_ERROR, run_cycle_advise
@@ -286,3 +287,131 @@ def test_cycle_advise_does_not_modify_files(tmp_path: Path) -> None:
     assert result.ok is True
     assert result.attempted_transport is True
     assert before == after
+
+
+def test_cycle_advise_write_report_creates_advisory_file_only(tmp_path: Path) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    before = _files_snapshot(tmp_path)
+
+    def _fake_transport(*_args):
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"safe advisory content"}}]}'
+
+    result = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=True,
+        transport=_fake_transport,
+    )
+    after = _files_snapshot(tmp_path)
+
+    assert result.ok is True
+    assert result.execution is not None
+    assert result.execution.advisory_text == "safe advisory content"
+    assert result.report_written is True
+    assert result.report_path == ".ai-loop/cycles/c-001/advisory.md"
+    assert after - before == {".ai-loop/cycles/c-001/advisory.md"}
+
+
+def test_cycle_advise_write_report_content_is_sanitized(tmp_path: Path) -> None:
+    _write(
+        tmp_path / ".ai-loop/config/models.yaml",
+        _valid_models_yaml(policy_allowed=True).replace(
+            "mode: none",
+            "mode: required\n      env: OPENAI_API_KEY",
+        ),
+    )
+    _write(tmp_path / ".ai-loop/project.md", "project context\n")
+    _make_cycle(tmp_path, "c-001")
+    _write(tmp_path / ".ai-loop/cycles/c-001/summary.md", "summary context\n")
+    secret = "secret-token-123"
+
+    def _fake_transport(*_args):
+        body = {"choices": [{"message": {"role": "assistant", "content": "## Summary\nKeep scope tight."}}]}
+        return 200, json.dumps(body).encode("utf-8")
+
+    result = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=True,
+        environ={"OPENAI_API_KEY": secret},
+        transport=_fake_transport,
+    )
+
+    assert result.ok is True
+    report_path = tmp_path / ".ai-loop/cycles/c-001/advisory.md"
+    content = report_path.read_text(encoding="utf-8")
+    assert "cycle id: c-001" in content
+    assert "requested role: supervisor" in content
+    assert "resolved model key: qwen3_local" in content
+    assert "backend model name: qwen3_local_backend" in content
+    assert "provider key: local_vllm" in content
+    assert "input artifacts:" in content
+    assert "transport status: ok" in content
+    assert "generated_at_utc:" in content
+    assert "no files were modified except the explicit report write" in content
+    assert "## Summary\nKeep scope tight." in content
+    assert secret not in content
+    assert "Authorization" not in content
+    assert '"messages"' not in content
+    assert '"model"' not in content
+    assert '"choices"' not in content
+
+
+def test_cycle_advise_write_report_fails_when_file_exists(tmp_path: Path) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    report_path = tmp_path / ".ai-loop/cycles/c-001/advisory.md"
+    _write(report_path, "existing content")
+    attempted = {"value": False}
+
+    def _fake_transport(*_args):
+        attempted["value"] = True
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"new advisory"}}]}'
+
+    result = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=True,
+        transport=_fake_transport,
+    )
+
+    assert result.ok is False
+    assert result.attempted_transport is False
+    assert result.execution is None
+    assert result.report_written is False
+    assert result.report_path == ".ai-loop/cycles/c-001/advisory.md"
+    assert result.error_code == "report_exists"
+    assert attempted["value"] is False
+    assert report_path.read_text(encoding="utf-8") == "existing content"
+
+
+def test_cycle_advise_write_report_not_written_on_preparation_or_execution_failure(tmp_path: Path) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+
+    blocked = run_cycle_advise(tmp_path, cycle_id="c-001", allow_call=False, write_report=True)
+    assert blocked.ok is False
+    assert blocked.report_written is False
+    assert not (tmp_path / ".ai-loop/cycles/c-001/advisory.md").exists()
+
+    def _broken_transport(*_args):
+        raise TimeoutError("token")
+
+    runtime = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=True,
+        transport=_broken_transport,
+    )
+    assert runtime.ok is False
+    assert runtime.report_written is False
+    assert not (tmp_path / ".ai-loop/cycles/c-001/advisory.md").exists()
