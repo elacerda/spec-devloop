@@ -194,6 +194,8 @@ class CycleAdviseResult:
         Execution result when transport was attempted.
     report_written
         True when `--write-report` was requested and advisory persistence succeeded.
+    report_overwritten
+        True when advisory persistence replaced an existing `advisory.md`.
     report_path
         Relative advisory report path when written.
     error_code
@@ -208,6 +210,7 @@ class CycleAdviseResult:
     prepared: CycleAdvisePreparedRequest | None
     execution: CycleAdviseExecutionResult | None
     report_written: bool = False
+    report_overwritten: bool = False
     report_path: str | None = None
     error_code: str | None = None
     error_message: str | None = None
@@ -219,6 +222,7 @@ def run_cycle_advise(
     role: str = "supervisor",
     allow_call: bool = False,
     write_report: bool = False,
+    overwrite_report: bool = False,
     environ: Mapping[str, str] | None = None,
     transport: CycleAdviseTransport | None = None,
 ) -> CycleAdviseResult:
@@ -237,6 +241,9 @@ def run_cycle_advise(
     write_report
         When True, persist advisory output to
         `.ai-loop/cycles/<cycle-id>/advisory.md` after successful extraction.
+    overwrite_report
+        When True, allows replacing an existing advisory report. Requires
+        `write_report=True`.
     environ
         Environment map used by config validation and auth token resolution.
         Defaults to `os.environ`.
@@ -259,6 +266,15 @@ def run_cycle_advise(
 
     env_map = os.environ if environ is None else environ
     findings: list[CycleAdviseFinding] = []
+    if overwrite_report and not write_report:
+        findings.append(
+            CycleAdviseFinding(
+                severity=SEVERITY_ERROR,
+                message="--overwrite-report requires --write-report",
+                code="overwrite_requires_write_report",
+            )
+        )
+        return CycleAdviseResult(False, False, findings, None, None, report_written=False, report_overwritten=False)
 
     config = run_model_config_check(project_root, environ=env_map)
     config_errors = [item for item in config.findings if item.severity == SEVERITY_ERROR]
@@ -416,7 +432,7 @@ def run_cycle_advise(
         advisory_context=advisory_context,
     )
 
-    if write_report:
+    if write_report and not overwrite_report:
         report_rel_path = _advisory_report_relative_path(prepared.cycle_id)
         if (project_root / report_rel_path).exists():
             return CycleAdviseResult(
@@ -433,13 +449,13 @@ def run_cycle_advise(
 
     execution = execute_cycle_advise(prepared, environ=env_map, transport=transport)
     if not execution.ok:
-        return CycleAdviseResult(False, True, findings, prepared, execution, report_written=False)
+        return CycleAdviseResult(False, True, findings, prepared, execution, report_written=False, report_overwritten=False)
 
     findings.append(CycleAdviseFinding(severity=SEVERITY_INFO, message="cycle advise advisory received"))
     if not write_report:
-        return CycleAdviseResult(True, True, findings, prepared, execution, report_written=False)
+        return CycleAdviseResult(True, True, findings, prepared, execution, report_written=False, report_overwritten=False)
 
-    report_write = _write_advisory_report(project_root, prepared, execution)
+    report_write = _write_advisory_report(project_root, prepared, execution, overwrite=overwrite_report)
     if report_write["ok"] is not True:
         return CycleAdviseResult(
             False,
@@ -448,6 +464,7 @@ def run_cycle_advise(
             prepared,
             execution,
             report_written=False,
+            report_overwritten=False,
             error_code=report_write["error_code"],
             error_message=report_write["error_message"],
         )
@@ -459,6 +476,7 @@ def run_cycle_advise(
         prepared,
         execution,
         report_written=True,
+        report_overwritten=bool(report_write.get("report_overwritten", False)),
         report_path=report_write["report_path"],
     )
 
@@ -473,6 +491,7 @@ def _write_advisory_report(
     project_root: Path,
     prepared: CycleAdvisePreparedRequest,
     execution: CycleAdviseExecutionResult,
+    overwrite: bool = False,
 ) -> dict[str, str | bool]:
     """Write the sanitized advisory report to the cycle-local advisory file.
 
@@ -484,6 +503,8 @@ def _write_advisory_report(
         Sanitized prepared request metadata.
     execution
         Successful execution result containing advisory text.
+    overwrite
+        Whether an existing advisory report can be replaced.
 
     Returns
     -------
@@ -494,7 +515,8 @@ def _write_advisory_report(
 
     report_rel_path = _advisory_report_relative_path(prepared.cycle_id)
     report_path = project_root / report_rel_path
-    if report_path.exists():
+    report_preexisted = report_path.exists()
+    if report_preexisted and not overwrite:
         return {
             "ok": False,
             "error_code": "report_exists",
@@ -532,7 +554,7 @@ def _write_advisory_report(
             "error_message": "unable to write advisory report due to filesystem error",
         }
 
-    return {"ok": True, "report_path": report_rel_path}
+    return {"ok": True, "report_path": report_rel_path, "report_overwritten": report_preexisted}
 
 
 def execute_cycle_advise(

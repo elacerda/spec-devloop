@@ -2,6 +2,9 @@
 
 Status: accepted
 
+Update 2026-05-28: explicit `--overwrite-report` has now been implemented with
+the same safety boundaries. Timestamped advisory history remains future work.
+
 ## Context
 
 `devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report`
@@ -27,7 +30,7 @@ The current behavior is intentionally conservative:
 
 Keep the current conservative behavior as the default.
 
-Do not add `--overwrite-report` yet.
+Explicit `--overwrite-report` is now implemented as an opt-in extension.
 
 Do not add timestamped advisory history yet.
 
@@ -45,17 +48,19 @@ tokens on a result that cannot be written.
 Avoiding timestamped history for now prevents introducing unresolved retention,
 cleanup, comparison, and naming-policy questions.
 
-Avoiding overwrite for now prevents accidental loss of advisory evidence while
-the project is still stabilizing the model-backed workflow.
+Keeping overwrite explicit prevents accidental loss of advisory evidence while
+still allowing intentional regeneration when the user passes `--overwrite-report`.
 
 ## Consequences
 
-Users who want to regenerate an advisory must currently delete or move
-`advisory.md` manually before rerunning with `--write-report`.
+By default, users who want to regenerate an advisory must delete or move
+`advisory.md` manually before rerunning with `--write-report`, or explicitly
+opt into replacement with `--write-report --overwrite-report`.
+
+The CLI now supports explicit `--overwrite-report` when combined with `--write-report`.
 
 The CLI does not yet support:
 
-- `--overwrite-report`;
 - timestamped advisory history;
 - multiple advisory reports per cycle;
 - advisory report cleanup;
@@ -63,8 +68,7 @@ The CLI does not yet support:
 
 ## Future options
 
-A future `--overwrite-report` flag may be added if it remains explicit and
-preserves the same safety boundaries:
+`--overwrite-report` has been implemented and must remain explicit. It preserves the same safety boundaries:
 
 - write only advisory files;
 - do not mutate cycle planning artifacts;
@@ -76,12 +80,12 @@ A future timestamped history mode may be useful, but should be designed
 separately because it introduces retention, cleanup, naming, and comparison
 questions.
 
-Possible future shapes include:
+The implemented overwrite shape is:
 
     devloop cycle advise <cycle-id> --allow-call --write-report --overwrite-report
 
-or:
+A possible future history shape is:
 
     devloop cycle advise <cycle-id> --allow-call --write-report --history
 
-These are not part of the current contract.
+Timestamped history is not part of the current contract.

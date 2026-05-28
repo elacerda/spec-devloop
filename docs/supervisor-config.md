@@ -402,7 +402,7 @@ safety: no files modified
 
 - Real model-backed advisory transport is implemented for explicitly authorized `cycle advise` calls.
 - Autonomous execution remains out of scope.
-- Optional explicit persistence is available via `--write-report`, which writes only `.ai-loop/cycles/<cycle-id>/advisory.md` on successful advisory generation and refuses overwrite.
+- Optional explicit persistence is available via `--write-report`, which writes only `.ai-loop/cycles/<cycle-id>/advisory.md` on successful advisory generation. Existing reports are refused by default; explicit `--overwrite-report` allows replacement and is valid only with `--write-report`.
 
 
 ### Cycle advisory transport
@@ -518,6 +518,7 @@ Expected result:
 - `attempted_transport: true`;
 - `transport: ok`;
 - `report_written: true`;
+- `report_overwritten: false`;
 - `report_path: .ai-loop/cycles/<cycle-id>/advisory.md`;
 - only `.ai-loop/cycles/<cycle-id>/advisory.md` is created or modified.
 
@@ -533,6 +534,32 @@ Expected result:
 - the existing report is not overwritten;
 - model transport is not attempted;
 - no additional files are modified.
+
+Expected explicit-overwrite path:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report --overwrite-report
+
+when `.ai-loop/cycles/<cycle-id>/advisory.md` already exists.
+
+Expected result:
+
+- exit code `0`;
+- `attempted_transport: true`;
+- `report_written: true`;
+- `report_overwritten: true`;
+- only `.ai-loop/cycles/<cycle-id>/advisory.md` is modified.
+
+Expected invalid-flag-combination path:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --overwrite-report
+
+Expected result:
+
+- exit code `2`;
+- `attempted_transport: false`;
+- `report_written: false`;
+- `report_overwritten: false`;
+- no files are modified.
 
 Recommended validation commands:
 

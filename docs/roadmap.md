@@ -201,14 +201,15 @@ Implemented behavior:
 
 - without `--write-report`, the command remains stdout-only and does not mutate files;
 - with `--write-report`, the command writes only `.ai-loop/cycles/<cycle-id>/advisory.md`;
-- existing `advisory.md` files are not overwritten;
-- the existing-report case fails before model transport, avoiding unnecessary calls;
+- existing `advisory.md` files are not overwritten by default;
+- the default existing-report case fails before model transport, avoiding unnecessary calls;
+- with `--write-report --overwrite-report`, existing `advisory.md` is replaced after successful transport;
+- `--overwrite-report` without `--write-report` fails before model transport;
 - persisted reports contain sanitized metadata and advisory text;
 - raw prompts, raw payloads, raw response JSON, headers, authorization values, API keys, environment values, and hidden chain-of-thought are not persisted.
 
 Current deliberate limitations:
 
-- no `--overwrite-report` flag;
 - no timestamped advisory history;
 - no autonomous shell execution;
 - no external agent execution;
@@ -238,13 +239,29 @@ as low readiness only because optional artifacts were absent.
 
 ## I1 — Advisory report overwrite/history policy
 
-Status: accepted as documentation-only contract.
+Status: implemented for explicit overwrite; history remains future work.
 
 ADR `0007-advisory-report-overwrite-and-history-policy.md` keeps the current
 `cycle advise --write-report` behavior conservative:
 
-- existing `advisory.md` files are not overwritten;
+- existing `advisory.md` files are not overwritten by default;
 - existing-report failures happen before model transport;
-- `--overwrite-report` is not implemented yet;
+- explicit `--overwrite-report` is implemented and requires `--write-report`;
 - timestamped advisory history is not implemented yet;
-- both overwrite and history remain future extensions requiring explicit design.
+- timestamped history remains a future extension requiring explicit design.
+
+## I2 — Explicit advisory overwrite flag
+
+Status: implemented.
+
+`devloop cycle advise` now supports explicit advisory overwrite with:
+
+    devloop cycle advise <cycle-id> --role supervisor --allow-call --write-report --overwrite-report
+
+Current contract:
+
+- `--overwrite-report` is meaningful only with `--write-report`;
+- without `--overwrite-report`, an existing `advisory.md` still fails before model transport;
+- with both flags, overwrite happens only after existing gates pass and transport returns advisory content;
+- only `.ai-loop/cycles/<cycle-id>/advisory.md` is mutated;
+- CLI output includes `report_overwritten: true|false`.

@@ -399,6 +399,7 @@ def test_cycle_advise_write_report_fails_when_file_exists(tmp_path: Path) -> Non
     assert result.attempted_transport is False
     assert result.execution is None
     assert result.report_written is False
+    assert result.report_overwritten is False
     assert result.report_path == ".ai-loop/cycles/c-001/advisory.md"
     assert result.error_code == "report_exists"
     assert attempted["value"] is False
@@ -412,6 +413,7 @@ def test_cycle_advise_write_report_not_written_on_preparation_or_execution_failu
     blocked = run_cycle_advise(tmp_path, cycle_id="c-001", allow_call=False, write_report=True)
     assert blocked.ok is False
     assert blocked.report_written is False
+    assert blocked.report_overwritten is False
     assert not (tmp_path / ".ai-loop/cycles/c-001/advisory.md").exists()
 
     def _broken_transport(*_args):
@@ -427,4 +429,63 @@ def test_cycle_advise_write_report_not_written_on_preparation_or_execution_failu
     )
     assert runtime.ok is False
     assert runtime.report_written is False
+    assert runtime.report_overwritten is False
     assert not (tmp_path / ".ai-loop/cycles/c-001/advisory.md").exists()
+
+
+def test_cycle_advise_overwrite_report_requires_write_report(tmp_path: Path) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    attempted = {"value": False}
+
+    def _fake_transport(*_args):
+        attempted["value"] = True
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"new advisory"}}]}'
+
+    result = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=False,
+        overwrite_report=True,
+        transport=_fake_transport,
+    )
+
+    assert result.ok is False
+    assert result.attempted_transport is False
+    assert result.report_written is False
+    assert result.report_overwritten is False
+    assert attempted["value"] is False
+    assert result.error_code is None
+    assert any("--overwrite-report requires --write-report" in message for message in _errors(result))
+
+
+def test_cycle_advise_write_report_overwrites_existing_file_when_enabled(tmp_path: Path) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    report_path = tmp_path / ".ai-loop/cycles/c-001/advisory.md"
+    _write(report_path, "existing content")
+    attempted = {"value": False}
+
+    def _fake_transport(*_args):
+        attempted["value"] = True
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"overwritten advisory"}}]}'
+
+    result = run_cycle_advise(
+        tmp_path,
+        cycle_id="c-001",
+        role="supervisor",
+        allow_call=True,
+        write_report=True,
+        overwrite_report=True,
+        transport=_fake_transport,
+    )
+
+    assert result.ok is True
+    assert result.attempted_transport is True
+    assert result.report_written is True
+    assert result.report_overwritten is True
+    assert result.report_path == ".ai-loop/cycles/c-001/advisory.md"
+    assert attempted["value"] is True
+    assert "overwritten advisory" in report_path.read_text(encoding="utf-8")

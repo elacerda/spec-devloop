@@ -85,6 +85,7 @@ def test_cycle_advise_success_output_prepared(tmp_path: Path, monkeypatch) -> No
     assert "attempted_transport: true" in result.stdout
     assert "transport: ok" in result.stdout
     assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
     assert "safety: no files modified" in result.stdout
     assert "advisory:" in result.stdout
     assert "- Focus the next validation step." in result.stdout
@@ -100,6 +101,7 @@ def test_cycle_advise_missing_allow_call_returns_blocked(tmp_path: Path) -> None
     assert "result: blocked" in result.stdout
     assert "attempted_transport: false" in result.stdout
     assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
 
 
 def test_cycle_advise_policy_false_returns_blocked(tmp_path: Path) -> None:
@@ -174,6 +176,7 @@ def test_cycle_advise_transport_runtime_failure_returns_three(tmp_path: Path, mo
     assert "attempted_transport: true" in result.stdout
     assert "transport: error" in result.stdout
     assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
     assert "transport request timed out" in result.stdout
     assert "super-secret" not in result.stdout
 
@@ -194,6 +197,7 @@ def test_cycle_advise_invalid_model_response_returns_three(tmp_path: Path, monke
     assert "attempted_transport: true" in result.stdout
     assert "transport: error" in result.stdout
     assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
     assert "assistant content" in result.stdout
 
 
@@ -210,6 +214,7 @@ def test_cycle_advise_write_report_outputs_path_and_writes_file(tmp_path: Path, 
 
     assert result.exit_code == 0
     assert "report_written: true" in result.stdout
+    assert "report_overwritten: false" in result.stdout
     assert "report_path: .ai-loop/cycles/c-001/advisory.md" in result.stdout
     report_path = tmp_path / ".ai-loop/cycles/c-001/advisory.md"
     assert report_path.exists()
@@ -234,7 +239,48 @@ def test_cycle_advise_write_report_existing_file_returns_two(tmp_path: Path, mon
     assert "result: error" in result.stdout
     assert "attempted_transport: false" in result.stdout
     assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
     assert "report_path: .ai-loop/cycles/c-001/advisory.md" in result.stdout
     assert "advisory report already exists" in result.stdout
     assert attempted["value"] is False
     assert (tmp_path / ".ai-loop/cycles/c-001/advisory.md").read_text(encoding="utf-8") == "existing"
+
+
+def test_cycle_advise_overwrite_report_without_write_report_returns_two(tmp_path: Path, monkeypatch) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    from devloop import cycle_advise as advise_module
+    attempted = {"value": False}
+
+    def _fake_transport(_url, _payload, _headers, _timeout):
+        attempted["value"] = True
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"new"}}]}'
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
+    result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call", "--overwrite-report"])
+
+    assert result.exit_code == 2
+    assert "result: error" in result.stdout
+    assert "attempted_transport: false" in result.stdout
+    assert "report_written: false" in result.stdout
+    assert "report_overwritten: false" in result.stdout
+    assert "--overwrite-report requires --write-report" in result.stdout
+    assert attempted["value"] is False
+
+
+def test_cycle_advise_overwrite_report_outputs_true_and_replaces_file(tmp_path: Path, monkeypatch) -> None:
+    _write(tmp_path / ".ai-loop/config/models.yaml", _valid_models_yaml(policy_allowed=True))
+    _make_cycle(tmp_path, "c-001")
+    _write(tmp_path / ".ai-loop/cycles/c-001/advisory.md", "existing")
+    from devloop import cycle_advise as advise_module
+
+    def _fake_transport(_url, _payload, _headers, _timeout):
+        return 200, b'{"choices":[{"message":{"role":"assistant","content":"new advisory text"}}]}'
+
+    monkeypatch.setattr(advise_module, "_default_http_transport", _fake_transport)
+    result = _invoke_in_cwd(tmp_path, ["c-001", "--allow-call", "--write-report", "--overwrite-report"])
+
+    assert result.exit_code == 0
+    assert "report_written: true" in result.stdout
+    assert "report_overwritten: true" in result.stdout
+    assert "new advisory text" in (tmp_path / ".ai-loop/cycles/c-001/advisory.md").read_text(encoding="utf-8")
