@@ -25,6 +25,7 @@ from devloop.doctor import (
 from devloop.init_check import run_init_check
 from devloop.init_project import run_init_project
 from devloop.model_config import run_model_config_check
+from devloop.model_ping import run_model_ping
 
 app = typer.Typer(help="spec-devloop CLI")
 cycle_app = typer.Typer(help="Manual cycle report-only commands.")
@@ -445,6 +446,59 @@ def model_list() -> None:
         raise
     except Exception as exc:  # pragma: no cover - defensive fallback
         typer.echo(f"error: unexpected model list failure: {exc}")
+        raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
+
+
+@model_app.command("ping")
+def model_ping(
+    target: str,
+    allow_call: bool = typer.Option(
+        False,
+        "--allow-call",
+        help="Explicit runtime authorization to prepare a model ping request.",
+    ),
+) -> None:
+    """Prepare a sanitized model ping request without performing network transport."""
+    project_root = Path.cwd()
+    try:
+        result = run_model_ping(project_root, target=target, allow_call=allow_call)
+        typer.echo(f"target: {target}")
+
+        if not result.ok:
+            finding_codes = {item.code for item in result.findings if item.code is not None}
+            blocked_codes = {"policy_blocked", "allow_call_missing"}
+            result_label = "blocked" if finding_codes & blocked_codes else "error"
+            typer.echo(f"result: {result_label}")
+            for finding in result.findings:
+                if finding.location:
+                    typer.echo(f"error: {finding.location}: {finding.message}")
+                else:
+                    typer.echo(f"error: {finding.message}")
+            raise typer.Exit(code=2)
+
+        prepared = result.prepared
+        if prepared is None:
+            typer.echo("result: error")
+            typer.echo("error: prepared request metadata is missing")
+            raise typer.Exit(code=2)
+
+        typer.echo("result: prepared")
+        typer.echo(f"resolved_model: {prepared.resolved_model_key}")
+        typer.echo(f"backend_model: {prepared.backend_model_name}")
+        typer.echo(f"provider: {prepared.provider_key}")
+        typer.echo(f"endpoint: {prepared.provider_base_url}")
+        typer.echo(f"timeout_seconds: {prepared.timeout_seconds}")
+        typer.echo(f"auth: {prepared.auth_mode}")
+        if prepared.auth_env_name:
+            typer.echo(f"auth_env: {prepared.auth_env_name}")
+        typer.echo(f"auth_present: {str(prepared.auth_present).lower()}")
+        typer.echo(f"attempted_transport: {str(result.attempted_transport).lower()}")
+        typer.echo("note: no network call was performed")
+        raise typer.Exit(code=0)
+    except typer.Exit:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        typer.echo(f"error: unexpected model ping failure: {exc}")
         raise typer.Exit(code=DEFAULT_EXIT_CODES["internal_failure"]) from exc
 
 

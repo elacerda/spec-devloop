@@ -233,3 +233,176 @@ def test_model_list_unexpected_failure_returns_three(tmp_path: Path, monkeypatch
 
     assert result.exit_code == 3
     assert "unexpected model list failure" in result.stdout
+
+
+def _invoke_model_ping_in_cwd(cwd: Path, args: list[str], env: dict[str, str] | None = None) -> any:
+    """Invoke `devloop model ping` in the given directory."""
+    old_cwd = Path.cwd()
+    os.chdir(cwd)
+    try:
+        return runner.invoke(app, ["model", "ping", *args], env=env, catch_exceptions=False)
+    finally:
+        os.chdir(old_cwd)
+
+
+def test_model_ping_missing_config_returns_error_two(tmp_path: Path) -> None:
+    """Ping fails with exit code 2 and error result when config is missing."""
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 2
+    assert "target: supervisor" in result.stdout
+    assert "result: error" in result.stdout
+    assert "model config file is required for ping" in result.stdout
+
+
+def test_model_ping_allow_call_missing_returns_blocked_two(tmp_path: Path) -> None:
+    """Ping fails with blocked result when --allow-call is omitted."""
+    config = VALID_MODELS_YAML.replace("model_calls_allowed: false", "model_calls_allowed: true")
+    _write(tmp_path / ".ai-loop/config/models.yaml", config)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor"])
+
+    assert result.exit_code == 2
+    assert "result: blocked" in result.stdout
+    assert "allow_call=True" in result.stdout
+
+
+def test_model_ping_policy_false_returns_blocked_two(tmp_path: Path) -> None:
+    """Ping fails with blocked result when policy disallows model calls."""
+    _write(tmp_path / ".ai-loop/config/models.yaml", VALID_MODELS_YAML)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 2
+    assert "result: blocked" in result.stdout
+    assert "policy.model_calls_allowed" in result.stdout
+
+
+def test_model_ping_unknown_target_returns_error_two(tmp_path: Path) -> None:
+    """Ping fails with error result for unknown role/model target."""
+    config = VALID_MODELS_YAML.replace("model_calls_allowed: false", "model_calls_allowed: true")
+    _write(tmp_path / ".ai-loop/config/models.yaml", config)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["missing", "--allow-call"])
+
+    assert result.exit_code == 2
+    assert "result: error" in result.stdout
+    assert "unknown target: missing" in result.stdout
+
+
+def test_model_ping_success_returns_prepared_zero(tmp_path: Path) -> None:
+    """Ping succeeds with prepared output when policy and allow_call are enabled."""
+    config = """schema_version: 1
+policy:
+  model_calls_allowed: true
+providers:
+  local_vllm:
+    type: openai_compatible
+    base_url: http://localhost:8000/v1
+    timeout_seconds: 30
+    api_key:
+      mode: none
+models:
+  qwen3_local:
+    provider: local_vllm
+roles:
+  supervisor:
+    model: qwen3_local
+"""
+    _write(tmp_path / ".ai-loop/config/models.yaml", config)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 0
+    assert "result: prepared" in result.stdout
+    assert "resolved_model: qwen3_local" in result.stdout
+    assert "provider: local_vllm" in result.stdout
+    assert "attempted_transport: false" in result.stdout
+    assert "note: no network call was performed" in result.stdout
+
+
+def test_model_ping_auth_present_true_without_secret_exposure(tmp_path: Path) -> None:
+    """Ping shows auth presence without printing secret values."""
+    config = """schema_version: 1
+policy:
+  model_calls_allowed: true
+providers:
+  local_vllm:
+    type: openai_compatible
+    base_url: http://localhost:8000/v1
+    api_key:
+      mode: optional
+      env: OPENAI_API_KEY
+models:
+  qwen3_local:
+    provider: local_vllm
+roles:
+  supervisor:
+    model: qwen3_local
+"""
+    _write(tmp_path / ".ai-loop/config/models.yaml", config)
+
+    secret = "super-secret-token"
+    result = _invoke_model_ping_in_cwd(
+        tmp_path,
+        ["supervisor", "--allow-call"],
+        env={"OPENAI_API_KEY": secret},
+    )
+
+    assert result.exit_code == 0
+    assert "auth_present: true" in result.stdout
+    assert secret not in result.stdout
+
+
+def test_model_ping_missing_config_does_not_create_config_file(tmp_path: Path) -> None:
+    """Ping must not create models.yaml when it is absent."""
+    config_path = tmp_path / ".ai-loop/config/models.yaml"
+    assert not config_path.exists()
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 2
+    assert not config_path.exists()
+
+
+def test_model_ping_does_not_pass_transport_argument(tmp_path: Path, monkeypatch) -> None:
+    """CLI should call backend without passing transport argument."""
+    captured: dict[str, object] = {}
+
+    from devloop.model_ping import ModelPingFinding, ModelPingPreparedRequest, ModelPingResult
+
+    def _stub(project_root: Path, target: str, allow_call: bool, environ=None, transport=None):
+        captured["project_root"] = project_root
+        captured["target"] = target
+        captured["allow_call"] = allow_call
+        captured["environ"] = environ
+        captured["transport"] = transport
+        prepared = ModelPingPreparedRequest(
+            target=target,
+            resolved_model_key="qwen3_local",
+            backend_model_name="qwen3_local",
+            provider_key="local_vllm",
+            provider_base_url="http://localhost:8000/v1",
+            timeout_seconds=15,
+            payload={"messages": [{"role": "user", "content": "ping"}], "max_tokens": 1, "temperature": 0},
+            auth_mode="none",
+            auth_env_name=None,
+            auth_present=False,
+        )
+        return ModelPingResult(
+            ok=True,
+            attempted_transport=False,
+            findings=[ModelPingFinding(severity="info", message="prepared")],
+            prepared=prepared,
+        )
+
+    from devloop import cli as cli_module
+
+    monkeypatch.setattr(cli_module, "run_model_ping", _stub)
+
+    result = _invoke_model_ping_in_cwd(tmp_path, ["supervisor", "--allow-call"])
+
+    assert result.exit_code == 0
+    assert captured["target"] == "supervisor"
+    assert captured["allow_call"] is True
+    assert captured["transport"] is None
