@@ -20,10 +20,12 @@ policy:
 providers:
   local_vllm:
     type: openai_compatible
+    base_url: http://localhost:8000/v1
     api_key:
       mode: none
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   supervisor:
@@ -186,10 +188,12 @@ schema_version: 1
 providers:
   local_vllm:
     type: openai_compatible
+    base_url: http://localhost:8000/v1
     api_key:
       mode: none
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   reviewer:
@@ -308,6 +312,7 @@ providers:
       mode: none
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   supervisor:
@@ -353,6 +358,7 @@ providers:
       env: OPENAI_API_KEY
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   supervisor:
@@ -464,6 +470,7 @@ providers:
       mode: none
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   supervisor:

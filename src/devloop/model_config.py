@@ -269,6 +269,30 @@ def _validate_providers(
                 )
             )
 
+        if provider_type == "openai_compatible":
+            base_url = provider_data.get("base_url")
+            if not isinstance(base_url, str) or not base_url.strip():
+                findings.append(
+                    ModelConfigFinding(
+                        severity=SEVERITY_ERROR,
+                        message="provider.base_url is required for openai_compatible",
+                        location=f"{base_location}.base_url",
+                    )
+                )
+
+        timeout_seconds = provider_data.get("timeout_seconds")
+        if timeout_seconds is not None:
+            is_number = isinstance(timeout_seconds, (int, float))
+            is_bool = isinstance(timeout_seconds, bool)
+            if is_bool or not is_number or timeout_seconds <= 0:
+                findings.append(
+                    ModelConfigFinding(
+                        severity=SEVERITY_ERROR,
+                        message="provider.timeout_seconds must be a positive number",
+                        location=f"{base_location}.timeout_seconds",
+                    )
+                )
+
         api_key = provider_data.get("api_key")
         if api_key is None:
             continue
@@ -340,6 +364,16 @@ def _validate_models(
                 )
             )
             continue
+
+        resolved_name = model_data.get("name")
+        if not isinstance(resolved_name, str) or not resolved_name.strip():
+            findings.append(
+                ModelConfigFinding(
+                    severity=SEVERITY_ERROR,
+                    message="model.name must be a non-empty string",
+                    location=f"{base_location}.name",
+                )
+            )
 
         provider_name = model_data.get("provider")
         if not isinstance(provider_name, str):

@@ -88,10 +88,12 @@ providers:
   openai:
     type: openai_compatible
     enabled: true
+    base_url: http://localhost:8000/v1
     api_key:
       mode: none
 models:
   qwen3-coder-next-fp8:
+    name: qwen3-coder-next-fp8
     provider: openai
 roles:
   default:

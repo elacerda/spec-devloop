@@ -330,6 +330,7 @@ providers:
       mode: {api_key_mode}
 {env_line}models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   supervisor:
@@ -350,8 +351,10 @@ providers:
       mode: none
 models:
   shared:
+    name: shared
     provider: local_vllm
   from_role:
+    name: from_role
     provider: local_vllm
 roles:
   shared:
@@ -372,6 +375,7 @@ providers:
       mode: none
 models:
   qwen3_local:
+    name: qwen3_local
     provider: local_vllm
 roles:
   a:
