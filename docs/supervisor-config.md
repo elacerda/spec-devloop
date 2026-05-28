@@ -171,3 +171,36 @@ These commands do not exist in MVP-0 unless implemented separately.
 
 `providers.yaml` is already documented for MVP-0 doctor validation. The future
 `models.yaml` contract is the richer model-role-preference configuration layer.
+
+## Model configuration commands
+
+The `devloop model` command group provides local, read-only validation and listing of the declarative model configuration contract.
+
+### `devloop model check`
+
+Validates `.ai-loop/config/models.yaml` as a declarative contract.
+
+- **Local and read-only**: no network calls, no AI/model calls.
+- **Optional file**: missing config is allowed (returns warning, exit code 0).
+- **Validation errors**: returns exit code 2.
+- **Unexpected failures**: returns exit code 3.
+
+Outputs:
+- config path
+- file presence status
+- severity: message for each finding (info, warning, error)
+
+### `devloop model list`
+
+Lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml`.
+
+- **Local and read-only**: no network calls, no AI/model calls.
+- **No config present**: prints "no model config present", exit code 0.
+- **Validation errors**: prints error message, suggests running `check`, exit code 2.
+- **Success**: prints compact listing of providers, models, roles (with aliases shown).
+
+### Notes
+
+- Both commands are report-only and do not modify files.
+- Both commands do not contact endpoints or make model calls.
+- `devloop model ping` remains future work and is not implemented.

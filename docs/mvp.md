@@ -33,7 +33,9 @@ It is not the final product experience.
 - `devloop cycle list`;
 - `devloop cycle check <cycle-id>`;
 - `devloop cycle prompt <cycle-id>`;
-- `devloop cycle summary <cycle-id>`.
+- `devloop cycle summary <cycle-id>`;
+- `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
+- `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
 
 ## Product MVP
 

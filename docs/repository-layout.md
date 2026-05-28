@@ -165,7 +165,7 @@ The following files are optional and included in the prompt when present:
 
 ### Advanced
 
-- model configuration (`.ai-loop/config/models.yaml`);
+- model configuration (`.ai-loop/config/models.yaml`): declarative contract for providers, models, roles, and aliases; validated by `devloop model check` and listed by `devloop model list`;
 - agent adapters;
 - policy files;
 - memory;

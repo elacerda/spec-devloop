@@ -148,6 +148,8 @@ MVP-0 commands:
 - `devloop cycle check <cycle-id>`: validates the structure of one cycle.
 - `devloop cycle prompt <cycle-id>`: emits a Markdown context packet for manual execution. Requires a valid cycle and `.ai-loop/project.md`. Optional files (`.ai-loop/architecture.md`, `.ai-loop/protocol.md`, `.ai-loop/config/commands.yaml`, `.ai-loop/config/allowed_paths.yaml`) are included when present. Does not call AI or execute external commands.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
+- `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
+- `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
 
 ### MVP-1 low-friction cycle management
 

@@ -24,7 +24,9 @@ Implemented or in progress:
 - `devloop cycle list`;
 - `devloop cycle check <cycle-id>`;
 - `devloop cycle prompt <cycle-id>`;
-- `devloop cycle summary <cycle-id>`.
+- `devloop cycle summary <cycle-id>`;
+- `devloop model check`;
+- `devloop model list`.
 
 MVP-0 proves that the project can maintain local contracts before adding automation.
 
