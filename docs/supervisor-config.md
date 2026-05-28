@@ -324,9 +324,82 @@ For a sanitized manual validation transcript, see `docs/validation/model-ping-vl
 | `devloop doctor` | No | Local health check |
 | `devloop status` | No | Local status |
 | `devloop model ping <target> --allow-call` | Yes | Only with policy + flag |
+| `devloop cycle advise <cycle-id> [--role ROLE] --allow-call` | No | Preparation-only, no transport |
 
 **Safety:**
 - API keys are never printed in output.
 - Authorization headers are never printed.
 - Model response content is never printed.
 - No secrets are logged or persisted.
+
+## `devloop cycle advise`
+
+The `devloop cycle advise <cycle-id> [--role ROLE] --allow-call` command prepares a model-backed cycle advisory request without transport execution.
+
+**Authorization requirements:**
+
+The command requires **both** conditions to proceed:
+
+1. `policy.model_calls_allowed: true` in `.ai-loop/config/models.yaml`;
+2. explicit CLI flag `--allow-call`.
+
+If either condition is missing or false, execution stops before transport.
+
+**Target resolution:**
+
+- `<cycle-id>` must be a valid cycle directory under `.ai-loop/cycles/`.
+- `<role>` defaults to `supervisor` if not specified.
+- Role names resolve to models via `roles.<role>.model` or `roles.<role>.same_as`.
+
+**Preparation behavior:**
+
+- Validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
+- Validates the target cycle structure (local, read-only).
+- Requires `policy.model_calls_allowed: true`.
+- Requires explicit `--allow-call` CLI flag.
+- Resolves role to model to provider.
+- Collects only allowlisted project/cycle artifacts (`.ai-loop/project.md`, cycle metadata, task/plan/prompt/summary/report files).
+- Outputs sanitized metadata to stdout only.
+
+**Success output shape:**
+
+On successful preparation, the command outputs:
+
+```text
+cycle_id: c-001
+role: supervisor
+result: prepared
+resolved_model: qwen3_coder_next_local
+backend_model: qwen3-coder-next
+provider: local_vllm
+inputs_count: 3
+inputs:
+  - .ai-loop/project.md
+  - .ai-loop/cycles/c-001/meta.yaml
+  - .ai-loop/cycles/c-001/task.md
+attempted_transport: false
+transport: skipped
+safety: no files modified
+```
+
+**Failure behavior:**
+
+- **Config/usage/policy failures**: exit code 2, `attempted_transport: false`
+- **Cycle validation failures**: exit code 2, `attempted_transport: false`
+- **Unexpected internal failures**: exit code 3, `attempted_transport: false`
+
+**Safety constraints:**
+
+- No secrets printed (API keys, Authorization headers, raw request headers).
+- No hidden chain-of-thought.
+- No prompt/payload/report/response persistence.
+- No file modification.
+- No network call.
+- No advisory text generated yet (preparation-only).
+- No autonomous execution.
+
+**Future work:**
+
+- Real model-backed advisory transport is not implemented yet.
+- Autonomous execution remains out of scope.
+- Persistence such as `--write-report` remains future work and requires a separate contract/ADR.
