@@ -150,6 +150,7 @@ MVP-0 commands:
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
+- `devloop model ping <target> --allow-call`: prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). See [Supervisor Config](docs/supervisor-config.md) for details.
 
 ### Model configuration
 
@@ -159,7 +160,11 @@ Model configuration is optional and report-only. The `.ai-loop/config/models.yam
 - **Invalid config**: If present but malformed or invalid, reported as an error.
 - **Status reporting**: `devloop status` reports `model_config: absent|valid|invalid|missing`.
 
-All `devloop model` commands (`check`, `list`) are local and read-only. `devloop model ping` remains future work.
+All `devloop model` commands (`check`, `list`) are local and read-only.
+
+### `devloop model ping`
+
+The `devloop model ping <target> --allow-call` command prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). Requires `policy.model_calls_allowed: true` in `.ai-loop/config/models.yaml` and the `--allow-call` flag. See [Supervisor Config](docs/supervisor-config.md) for details.
 
 ### MVP-1 low-friction cycle management
 

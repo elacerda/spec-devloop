@@ -211,4 +211,46 @@ Lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml`.
 
 - Both commands are report-only and do not modify files.
 - Both commands do not contact endpoints or make model calls.
-- `devloop model ping` remains future work and is not implemented.
+
+### `devloop model ping`
+
+The `devloop model ping <target> --allow-call` command prepares a sanitized model ping request without performing network transport.
+
+**Current implementation status (MVP-0):**
+
+- **Preparation-only**: The command calls the backend preparation layer only. No HTTP/network calls are performed.
+- **No model invocation**: The command does not call a model yet.
+- **No config modification**: The command does not create or modify `.ai-loop/config/models.yaml`.
+- **Sanitized output**: The command prints sanitized metadata such as:
+  - `resolved_model`: the resolved model key (after role resolution)
+  - `backend_model`: the backend model identifier
+  - `provider`: the provider key
+  - `endpoint`: the provider base URL
+  - `timeout_seconds`: the timeout budget
+  - `auth`: the auth mode (`none`, `optional`, `required`)
+  - `auth_env`: the environment variable name (if configured)
+  - `auth_present`: whether an auth token is present in environment
+  - `attempted_transport: false` (no network call was performed)
+  - `note: no network call was performed`
+
+**Authorization requirements:**
+
+The command requires **both** conditions to proceed:
+
+1. `policy.model_calls_allowed: true` in `.ai-loop/config/models.yaml`;
+2. explicit CLI flag `--allow-call`.
+
+**Target resolution:**
+
+- `<target>` may be a role name or model key.
+- Role names resolve before model names.
+- Unknown targets produce an error.
+
+**Security:**
+
+- API keys, Authorization headers, and secret values are never printed.
+- The command is local and read-only for the preparation layer.
+
+**Future work:**
+
+Real OpenAI-compatible HTTP transport remains future work. The current implementation is preparation-only.

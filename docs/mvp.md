@@ -36,6 +36,7 @@ It is not the final product experience.
 - `devloop cycle summary <cycle-id>`: prints a compact cycle summary.
 - `devloop model check`: validates `.ai-loop/config/models.yaml` configuration (local, read-only, no network calls).
 - `devloop model list`: lists providers, models, roles, and aliases from `.ai-loop/config/models.yaml` (local, read-only, no network calls).
+- `devloop model ping <target> --allow-call`: prepares a sanitized model ping request without performing network transport (local, read-only, no network calls). `attempted_transport: false`. Real HTTP transport remains future work.
 
 ### Model configuration in MVP-0
 
@@ -44,7 +45,6 @@ The `.ai-loop/config/models.yaml` file is **optional**. Its absence is not a rea
 - **Missing config**: `devloop doctor` and `devloop status` continue to work; status shows `absent`.
 - **Invalid config**: If present but malformed or invalid, reported as an error.
 - **No network calls**: All validation is local and read-only.
-- **`devloop model ping`**: Not implemented; remains future work.
 
 All `devloop model` commands (`check`, `list`) are report-only and do not modify files.
 
