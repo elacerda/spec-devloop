@@ -8,3 +8,4 @@ dist/
 build/
 .codexsession
 .python-version
+.env

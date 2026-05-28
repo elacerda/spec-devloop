@@ -267,3 +267,69 @@ On successful ping, the command outputs:
 **Future work:**
 
 Additional provider types and transport features may be added in future milestones.
+
+## Local vLLM Configuration (Safe Setup)
+
+For local OpenAI-compatible endpoints (e.g., vLLM), use these safe configuration steps:
+
+### 1. Create local `.env` file
+
+Copy `.env.example` to `.env` and fill in your API key:
+
+```bash
+cp .env.example .env
+# Edit .env and set your VLLM_API_KEY value
+```
+
+**Important:**
+- `.env` is local-only and should never be committed.
+- The CLI does NOT automatically load `.env` files.
+- Load it manually before running commands:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+### 2. Copy example model config
+
+Copy `docs/examples/models.local-vllm.yaml` to `.ai-loop/config/models.yaml`:
+
+```bash
+mkdir -p .ai-loop/config
+cp docs/examples/models.local-vllm.yaml .ai-loop/config/models.yaml
+```
+
+**Important:**
+- `.ai-loop/config/models.yaml` may contain local-specific settings.
+- Review before committing to version control.
+- Never commit API keys or secrets.
+
+### 3. Validate and test
+
+Run these commands to verify your setup:
+
+```bash
+devloop model check    # Validate config (local, no network)
+devloop model list     # List providers/models (local, no network)
+devloop model ping supervisor --allow-call  # Test connectivity (requires --allow-call)
+```
+
+For a sanitized manual validation transcript, see `docs/validation/model-ping-vllm.md`.
+
+### Command behavior summary
+
+| Command | Network | Notes |
+|---------|---------|-------|
+| `devloop model check` | No | Local validation only |
+| `devloop model list` | No | Local listing only |
+| `devloop doctor` | No | Local health check |
+| `devloop status` | No | Local status |
+| `devloop model ping <target> --allow-call` | Yes | Only with policy + flag |
+
+**Safety:**
+- API keys are never printed in output.
+- Authorization headers are never printed.
+- Model response content is never printed.
+- No secrets are logged or persisted.

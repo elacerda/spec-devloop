@@ -1,0 +1,45 @@
+# Local vLLM Model Configuration Example
+# Safe example for local OpenAI-compatible endpoints
+#
+# Copy this file to .ai-loop/config/models.yaml and customize for your setup.
+# DO NOT commit .ai-loop/config/models.yaml or .env to version control.
+#
+# Before committing any config files, review for local-specific settings.
+
+schema_version: 1
+
+policy:
+  model_calls_allowed: true
+  require_human_approval_for_model_calls: true
+  secrets_must_use_env: true
+  provider_specific_logic_allowed_in_core: false
+
+providers:
+  local_vllm:
+    type: openai_compatible
+    enabled: true
+    base_url: http://127.0.0.1:8000/v1
+    api_key:
+      mode: required
+      env: VLLM_API_KEY
+    timeout_seconds: 15
+
+models:
+  qwen3_coder_next_local:
+    provider: local_vllm
+    model: qwen-coder-next
+    enabled: true
+    aliases: [qwen-coder-next, local-coder]
+    limits:
+      context_window_tokens: 65536
+      default_max_output_tokens: 2048
+
+roles:
+  supervisor:
+    model: qwen3_coder_next_local
+  reviewer:
+    same_as: supervisor
+
+preferences:
+  default_role: supervisor
+  default_profile: micro
