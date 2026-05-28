@@ -235,3 +235,16 @@ Clarified contract:
 Manual validation after H5 confirmed that the model advisory no longer confused
 `report.md` with `advisory.md`, and did not classify a minimal validation cycle
 as low readiness only because optional artifacts were absent.
+
+## I1 — Advisory report overwrite/history policy
+
+Status: accepted as documentation-only contract.
+
+ADR `0007-advisory-report-overwrite-and-history-policy.md` keeps the current
+`cycle advise --write-report` behavior conservative:
+
+- existing `advisory.md` files are not overwritten;
+- existing-report failures happen before model transport;
+- `--overwrite-report` is not implemented yet;
+- timestamped advisory history is not implemented yet;
+- both overwrite and history remain future extensions requiring explicit design.
